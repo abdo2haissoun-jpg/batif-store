@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand: #FF5131;
+  --color-brand-hover: #e6452a;
+  --color-brand-light: rgba(255, 81, 49, 0.1);
+  --color-brand-dark: rgba(255, 81, 49, 0.15);
+}
+
+@layer base {
+  * {
+    @apply border-gray-200 dark:border-gray-800;
+  }
+  body {
+    @apply antialiased bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100;
+  }
+}

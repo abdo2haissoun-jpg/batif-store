@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.batif.admin</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/webloo/Desktop/batif dev/batif-app/start-server.sh</string>
+    </array>
+    <key>StandardOutPath</key>
+    <string>/Users/webloo/Desktop/batif dev/.freebuff/preview-74b431da-00fe-46c9-b1f4-942f5e633bfa.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/webloo/Desktop/batif dev/.freebuff/preview-74b431da-00fe-46c9-b1f4-942f5e633bfa.log</string>
+</dict>
+</plist>
