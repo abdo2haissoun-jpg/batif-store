@@ -38,7 +38,7 @@ export async function getStoreSettings() {
 // =====================================================
 
 export async function createOrder(orderData: {
-  customer_name: string; phone: string; city: string; address: string;
+  customer_name: string; phone: string; email?: string | null; city: string; address: string;
   postal_code?: string; note?: string;
   items: Array<{ product_id: string; product_name: string; color: string; size: string; quantity: number; unit_price: number }>;
   subtotal: number; delivery_fee: number; total: number;
@@ -48,6 +48,7 @@ export async function createOrder(orderData: {
 
   const { error: orderError } = await supabase.from('orders').insert({
     order_number: orderNum, customer_name: orderData.customer_name, phone: orderData.phone,
+    customer_email: orderData.email || null,
     city: orderData.city, address: orderData.address, postal_code: orderData.postal_code || null,
     note: orderData.note || null, subtotal: orderData.subtotal, delivery_fee: orderData.delivery_fee,
     total: orderData.total, payment_method: 'COD', status: 'new',

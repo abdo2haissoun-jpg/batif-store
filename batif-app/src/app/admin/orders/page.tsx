@@ -1,108 +1,295 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useTheme } from '@/lib/theme-context'
 import { adminFetch } from '@/lib/admin-fetch'
+import { inputClass, selectClass, cardClass, btnPrimary, labelClass } from '@/app/admin/components'
 
-const ORDER_STATUS_OPTIONS = [
-  { value: 'new', label: 'New' }, { value: 'confirmed', label: 'Confirmed' },
-  { value: 'packing', label: 'Packing' }, { value: 'shipped', label: 'Shipped' },
-  { value: 'delivered', label: 'Delivered' }, { value: 'cancelled', label: 'Cancelled' },
-  { value: 'returned', label: 'Returned' },
-]
-const STATUS_COLORS: Record<string, string> = {
-  new: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  confirmed: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  packing: 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  shipped: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  delivered: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  cancelled: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  returned: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+interface Order {
+  id: string
+  order_number: string
+  customer_name: string
+  phone: string
+  city: string
+  address: string
+  customer_email?: string
+  items?: any[]
+  subtotal: number
+  delivery_fee: number
+  total: number
+  status: string
+  payment_method: string
+  created_at: string
+  updated_at: string
 }
 
-interface Order { id: string; order_number: string; customer_name: string; phone: string; city: string; address: string; postal_code?: string; note?: string; subtotal: number; delivery_fee: number; total: number; payment_method: string; status: string; created_at: string; order_items?: any[] }
+const STATUS_OPTIONS = [
+  { value: 'new', label: 'New', color: 'bg-[#FF5131]/10 text-[#FF5131]' },
+  { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' },
+  { value: 'shipped', label: 'Shipped', color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' },
+  { value: 'delivered', label: 'Delivered', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  { value: 'cancelled', label: 'Cancelled', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+]
 
-export default function AdminOrders() {
+const STATUS_EMAIL_INFO: Record<string, string> = {
+  new: 'Confirmation email will be sent',
+  confirmed: 'Customer notified: order confirmed',
+  shipped: 'Customer notified: order shipped',
+  delivered: 'Customer notified: order delivered',
+  cancelled: 'Customer notified: order cancelled',
+}
+
+export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
-  const [filter, setFilter] = useState('')
-  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [filter, setFilter] = useState('all')
+  const [updating, setUpdating] = useState<string | null>(null)
+  const [emailStatus, setEmailStatus] = useState<string>('')
+  const { theme } = useTheme()
 
-  useEffect(() => { fetchOrders() }, [])
-  const fetchOrders = async () => {
-    setLoading(true)
-    try { const r = await adminFetch('/api/admin/orders'); if (r.ok) { const d = await r.json(); setOrders(d.orders || []) } }
-    catch {} finally { setLoading(false) }
+  const fetchOrders = useCallback(async () => {
+    try {
+      const params = filter !== 'all' ? `?status=${filter}` : ''
+      const res = await adminFetch(`/api/admin/orders${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        setOrders(data.orders || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch orders:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [filter])
+
+  useEffect(() => {
+    fetchOrders()
+    // Poll for new orders every 30 seconds
+    const interval = setInterval(fetchOrders, 30000)
+    return () => clearInterval(interval)
+  }, [fetchOrders])
+
+  const updateStatus = async (orderId: string, newStatus: string) => {
+    setUpdating(orderId)
+    setEmailStatus('')
+
+    try {
+      // Use the new status API that sends emails
+      const res = await adminFetch('/api/admin/orders/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, status: newStatus }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.email_sent) {
+          setEmailStatus(`✓ Status updated. Email sent to customer.`)
+        } else if (data.email_error) {
+          setEmailStatus(`✓ Status updated. Email: ${data.email_error}`)
+        } else {
+          setEmailStatus(`✓ Status updated.`)
+        }
+        fetchOrders()
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder({ ...selectedOrder!, status: newStatus })
+        }
+      } else {
+        setEmailStatus('Failed to update status')
+      }
+    } catch (err) {
+      setEmailStatus('Error updating status')
+    } finally {
+      setUpdating(null)
+      setTimeout(() => setEmailStatus(''), 5000)
+    }
   }
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
-    const r = await adminFetch(`/api/admin/orders/${orderId}`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) })
-    if (r.ok) { fetchOrders(); if (selectedOrder?.id === orderId) setSelectedOrder({ ...selectedOrder, status: newStatus }) }
+
+  const getStatusStyle = (status: string) => {
+    return STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-100 text-gray-600'
   }
-  const filtered = orders.filter(o => {
-    if (filter && o.status !== filter) return false
-    if (search) { const q = search.toLowerCase(); return o.order_number?.toLowerCase().includes(q) || o.customer_name?.toLowerCase().includes(q) || o.phone?.includes(q) }
-    return true
-  })
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-[#FF5131] rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold tracking-tight">Orders</h1><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{orders.length} orders total</p></div>
-      <div className="flex flex-col sm:flex-row gap-4">
-        <input type="text" placeholder="Search by order #, name, or phone..." value={search} onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#FF5131] text-sm" />
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setFilter('')} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${!filter ? 'bg-[#FF5131] text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>All</button>
-          {ORDER_STATUS_OPTIONS.map(s => (<button key={s.value} onClick={() => setFilter(s.value)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${filter === s.value ? 'bg-[#FF5131] text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}`}>{s.label}</button>))}
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Orders</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage customer orders and send notifications</p>
         </div>
       </div>
-      <div className="flex gap-6">
-        <div className="flex-1 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-          <div className="divide-y divide-gray-100 dark:divide-gray-800 max-h-[calc(100vh-300px)] overflow-y-auto">
-            {loading ? <div className="p-6 text-center text-gray-400 text-sm">Loading...</div> : filtered.length === 0 ? <div className="p-6 text-center text-gray-400 text-sm">No orders found</div> :
-              filtered.map((order) => (
-                <div key={order.id} onClick={() => setSelectedOrder(order)} className={`px-5 py-4 cursor-pointer transition-colors ${selectedOrder?.id === order.id ? 'bg-gray-50 dark:bg-gray-800/80 border-l-2 border-[#FF5131]' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
-                  <div className="flex items-center justify-between">
-                    <div><div className="font-medium text-sm">{order.order_number}</div><div className="text-xs text-gray-500 dark:text-gray-400">{order.customer_name} • {order.city}</div></div>
-                    <div className="text-right"><div className="text-sm font-medium">{order.total} MAD</div><span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[order.status] || STATUS_COLORS.new}`}>{order.status}</span></div>
-                  </div>
-                  <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{new Date(order.created_at).toLocaleDateString('en-GB')}</div>
-                </div>
-              ))}
-          </div>
+
+      {/* Email status notification */}
+      {emailStatus && (
+        <div className={`mb-4 p-3 rounded-xl text-sm ${
+          emailStatus.includes('Failed') || emailStatus.includes('Error')
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+            : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+        }`}>
+          {emailStatus}
         </div>
-        {selectedOrder ? (
-          <div className="w-full lg:w-[420px] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold">{selectedOrder.order_number}</h2>
-              <select value={selectedOrder.status} onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value)}
-                className="text-sm border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-1.5 bg-white dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-[#FF5131]">
-                {ORDER_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
+      )}
+
+      {/* Status filter */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+            filter === 'all'
+              ? 'bg-[#FF5131] text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`}
+        >
+          All ({orders.length})
+        </button>
+        {STATUS_OPTIONS.map(status => (
+          <button
+            key={status.value}
+            onClick={() => setFilter(status.value)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+              filter === status.value
+                ? 'bg-[#FF5131] text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            {status.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Orders list */}
+        <div className="lg:col-span-2 space-y-3">
+          {orders.length === 0 ? (
+            <div className={cardClass}>
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">No orders found</p>
             </div>
-            <div className="space-y-1">
-              <h3 className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Customer</h3>
-              <p className="text-sm">{selectedOrder.customer_name}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedOrder.phone}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedOrder.city}, {selectedOrder.address}</p>
-            </div>
-            <div className="border-t border-gray-100 dark:border-gray-800 pt-4">
-              <h3 className="text-[10px] font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Products</h3>
-              <div className="space-y-2">
-                {selectedOrder.order_items?.map((item: any) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <div><div className="font-medium">{item.product_name}</div><div className="text-gray-500 dark:text-gray-400 text-xs">{item.color} / {item.size} × {item.quantity}</div></div>
-                    <div className="font-medium">{item.total} MAD</div>
+          ) : (
+            orders.map(order => (
+              <div
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                className={`${cardClass} cursor-pointer hover:border-[#FF5131]/30 transition-colors ${
+                  selectedOrder?.id === order.id ? 'border-[#FF5131]' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">{order.order_number}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(order.status)}`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{order.customer_name} · {order.city}</p>
                   </div>
-                ))}
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900 dark:text-white">{order.total} MAD</p>
+                    <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Order detail */}
+        <div className="lg:col-span-1">
+          {selectedOrder ? (
+            <div className={`${cardClass} sticky top-24`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white">{selectedOrder.order_number}</h3>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(selectedOrder.status)}`}>
+                  {selectedOrder.status}
+                </span>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className={labelClass}>Customer</p>
+                  <p className="text-gray-900 dark:text-white">{selectedOrder.customer_name}</p>
+                  <p className="text-gray-500 dark:text-gray-400">{selectedOrder.phone}</p>
+                  {selectedOrder.customer_email && (
+                    <p className="text-gray-500 dark:text-gray-400">{selectedOrder.customer_email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className={labelClass}>Address</p>
+                  <p className="text-gray-900 dark:text-white">{selectedOrder.address}</p>
+                  <p className="text-gray-500 dark:text-gray-400">{selectedOrder.city}</p>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <p className={labelClass}>Total</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Subtotal</span>
+                    <span className="text-gray-900 dark:text-white">{selectedOrder.subtotal} MAD</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Delivery</span>
+                    <span className="text-gray-900 dark:text-white">{selectedOrder.delivery_fee} MAD</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-semibold mt-1">
+                    <span className="text-gray-900 dark:text-white">Total</span>
+                    <span className="text-gray-900 dark:text-white">{selectedOrder.total} MAD</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <p className={labelClass}>Payment</p>
+                  <p className="text-gray-900 dark:text-white capitalize">{selectedOrder.payment_method}</p>
+                </div>
+
+                {/* Status update */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <p className={labelClass}>Update Status</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+                    {STATUS_EMAIL_INFO[selectedOrder.status] || ''}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STATUS_OPTIONS.map(status => (
+                      <button
+                        key={status.value}
+                        onClick={() => updateStatus(selectedOrder.id, status.value)}
+                        disabled={updating === selectedOrder.id || selectedOrder.status === status.value}
+                        className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          selectedOrder.status === status.value
+                            ? `${getStatusStyle(status.value)} opacity-50 cursor-not-allowed`
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        } ${updating === selectedOrder.id ? 'opacity-50' : ''}`}
+                      >
+                        {updating === selectedOrder.id ? '...' : status.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Subtotal</span><span>{selectedOrder.subtotal} MAD</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500 dark:text-gray-400">Delivery</span><span>{selectedOrder.delivery_fee} MAD</span></div>
-              <div className="flex justify-between text-sm font-bold border-t border-gray-100 dark:border-gray-800 pt-2"><span>Total</span><span>{selectedOrder.total} MAD</span></div>
+          ) : (
+            <div className={`${cardClass} text-center py-12`}>
+              <p className="text-gray-400 dark:text-gray-500">Select an order to view details</p>
             </div>
-          </div>
-        ) : <div className="hidden lg:flex w-[420px] bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 items-center justify-center text-gray-400 text-sm">Select an order to view details</div>}
+          )}
+        </div>
       </div>
     </div>
   )

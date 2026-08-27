@@ -4,7 +4,7 @@ import { createOrder } from '@/lib/supabase/queries'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { customer_name, phone, city, address, postal_code, note, items, subtotal, delivery_fee, total } = body
+    const { customer_name, phone, email, city, address, postal_code, note, items, subtotal, delivery_fee, total } = body
 
     // Validate required fields
     if (!customer_name || !phone || !city || !address || !items?.length) {
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     const result = await createOrder({
       customer_name,
       phone,
+      email: email || null,
       city,
       address,
       postal_code,

@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     customer_name: '',
     phone: '',
+    email: '',
     city: '',
     address: '',
     postal_code: '',
@@ -154,6 +155,17 @@ export default function CheckoutPage() {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-md focus:ring-1 focus:ring-black focus:outline-none"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Email (for order updates)</label>
+                  <input
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-md focus:ring-1 focus:ring-black focus:outline-none"
+                    placeholder="Optional - receive order status emails"
                   />
                 </div>
                 <div>
