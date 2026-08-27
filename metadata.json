@@ -1,0 +1,6 @@
+{
+  "name": "BATIF",
+  "description": "Modern Menswear Luxury Landing Page & E-Commerce Catalog",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
