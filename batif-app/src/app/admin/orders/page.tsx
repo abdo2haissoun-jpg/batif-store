@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTheme } from '@/lib/theme-context'
 import { adminFetch } from '@/lib/admin-fetch'
 import { inputClass, selectClass, cardClass, btnPrimary, labelClass } from '@/app/admin/components'
@@ -46,6 +46,8 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState('all')
   const [updating, setUpdating] = useState<string | null>(null)
   const [emailStatus, setEmailStatus] = useState<string>('')
+  const [newOrderCount, setNewOrderCount] = useState(0)
+  const prevCountRef = useRef(0)
   const { theme } = useTheme()
 
   const fetchOrders = useCallback(async () => {
@@ -54,7 +56,17 @@ export default function OrdersPage() {
       const res = await adminFetch(`/api/admin/orders${params}`)
       if (res.ok) {
         const data = await res.json()
-        setOrders(data.orders || [])
+        const newOrders = data.orders || []
+        setOrders(newOrders)
+
+        // Detect new orders for notification
+        const newCount = newOrders.filter((o: Order) => o.status === 'new').length
+        if (prevCountRef.current > 0 && newCount > prevCountRef.current) {
+          setEmailStatus(`🔔 New order received! (${newCount - prevCountRef.current} new)`)
+          setTimeout(() => setEmailStatus(''), 8000)
+        }
+        prevCountRef.current = newCount
+        setNewOrderCount(newCount)
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err)
@@ -65,8 +77,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders()
-    // Poll for new orders every 30 seconds
-    const interval = setInterval(fetchOrders, 30000)
+    // Poll for new orders every 15 seconds
+    const interval = setInterval(fetchOrders, 15000)
     return () => clearInterval(interval)
   }, [fetchOrders])
 
@@ -75,34 +87,34 @@ export default function OrdersPage() {
     setEmailStatus('')
 
     try {
-      // Use the new status API that sends emails
       const res = await adminFetch('/api/admin/orders/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order_id: orderId, status: newStatus }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
+      const data = await res.json()
+
+      if (res.ok && data.success) {
         if (data.email_sent) {
-          setEmailStatus(`✓ Status updated. Email sent to customer.`)
+          setEmailStatus(`✓ Status updated to "${newStatus}". Email sent to customer.`)
         } else if (data.email_error) {
-          setEmailStatus(`✓ Status updated. Email: ${data.email_error}`)
+          setEmailStatus(`✓ Status updated to "${newStatus}". Email: ${data.email_error}`)
         } else {
-          setEmailStatus(`✓ Status updated.`)
+          setEmailStatus(`✓ Status updated to "${newStatus}".`)
         }
         fetchOrders()
         if (selectedOrder?.id === orderId) {
           setSelectedOrder({ ...selectedOrder!, status: newStatus })
         }
       } else {
-        setEmailStatus('Failed to update status')
+        setEmailStatus(`✗ Failed to update status: ${data.error || 'Unknown error'}`)
       }
-    } catch (err) {
-      setEmailStatus('Error updating status')
+    } catch (err: any) {
+      setEmailStatus(`✗ Network error: ${err.message}`)
     } finally {
       setUpdating(null)
-      setTimeout(() => setEmailStatus(''), 5000)
+      setTimeout(() => setEmailStatus(''), 8000)
     }
   }
 
@@ -135,12 +147,21 @@ export default function OrdersPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Orders</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage customer orders and send notifications</p>
         </div>
+        {newOrderCount > 0 && (
+          <div className="flex items-center gap-2 bg-[#FF5131]/10 text-[#FF5131] px-4 py-2 rounded-xl text-sm font-medium">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF5131] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF5131]"></span>
+            </span>
+            {newOrderCount} new order{newOrderCount > 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
-      {/* Email status notification */}
+      {/* Status notification */}
       {emailStatus && (
         <div className={`mb-4 p-3 rounded-xl text-sm ${
-          emailStatus.includes('Failed') || emailStatus.includes('Error')
+          emailStatus.includes('✗') || emailStatus.includes('Failed')
             ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
             : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
         }`}>

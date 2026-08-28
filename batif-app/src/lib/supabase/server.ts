@@ -1,9 +1,38 @@
 import { cookies } from 'next/headers'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+// =====================================================
+// SERVICE CLIENT (admin operations, full access)
+// Uses the real Supabase JS client
+// =====================================================
+export function createServiceClient() {
+  return createSupabaseClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+// =====================================================
+// USER CLIENT (authenticated user, respects RLS)
+// =====================================================
+export async function createUserClient() {
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get('sb-access-token')?.value || null
+  return createSupabaseClient(SUPABASE_URL, ANON_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    },
+  })
+}
+
+// =====================================================
+// LEGACY REST CLIENT (kept for backward compat with
+// queries.ts and admin-fetch that use the old pattern)
+// =====================================================
 type QueryResult<T = any> = { data: T | null; error: { message: string } | null; count?: number | null }
 
 class QueryBuilder {
@@ -22,7 +51,6 @@ class QueryBuilder {
     this.table = table
   }
 
-  // Chainable filter methods (must be called BEFORE terminal methods)
   select(cols: string, opts?: { count?: string; head?: boolean }) {
     this.selectClause = cols
     if (opts?.head) this.headOnly = true
@@ -40,12 +68,6 @@ class QueryBuilder {
   limit(n: number) { this.limitVal = n; return this }
   single() { this.limitVal = 1; return this }
 
-  private buildFilterUrl() {
-    let url = `${this.url}/rest/v1/${this.table}`
-    if (this.filters.length) url += '?' + this.filters.join('&')
-    return url
-  }
-
   private buildSelectUrl() {
     let url = `${this.url}/rest/v1/${this.table}?select=${this.selectClause}`
     if (this.filters.length) url += '&' + this.filters.join('&')
@@ -58,7 +80,6 @@ class QueryBuilder {
     return url
   }
 
-  // Terminal method: await supabase.from('t').select('*').eq('id', x)
   async then(resolve: any, reject?: any): Promise<any> {
     try {
       const url = this.buildSelectUrl()
@@ -85,7 +106,6 @@ class QueryBuilder {
     }
   }
 
-  // Terminal: insert data
   async insert(rows: any | any[]): Promise<QueryResult> {
     const body = Array.isArray(rows) ? rows : [rows]
     try {
@@ -107,11 +127,11 @@ class QueryBuilder {
     }
   }
 
-  // Terminal: update rows matching current filters
   async update(updates: Record<string, any>): Promise<QueryResult> {
     try {
-      const url = this.buildFilterUrl()
-      const res = await fetch(url, {
+      const url = this.buildSelectUrl().replace(`select=${this.selectClause}`, '').replace(/^&/, '?')
+      const filterUrl = `${this.url}/rest/v1/${this.table}?${this.filters.join('&')}`
+      const res = await fetch(filterUrl, {
         method: 'PATCH',
         headers: { ...this.headers, 'Prefer': 'return=representation' },
         body: JSON.stringify(updates),
@@ -129,11 +149,10 @@ class QueryBuilder {
     }
   }
 
-  // Terminal: delete rows matching current filters
   async delete(): Promise<QueryResult> {
     try {
-      const url = this.buildFilterUrl()
-      const res = await fetch(url, { method: 'DELETE', headers: this.headers })
+      const filterUrl = `${this.url}/rest/v1/${this.table}?${this.filters.join('&')}`
+      const res = await fetch(filterUrl, { method: 'DELETE', headers: this.headers })
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}))
         return { data: null, error: { message: errData.message || res.statusText } }
@@ -144,7 +163,6 @@ class QueryBuilder {
     }
   }
 
-  // Terminal: upsert
   async upsert(rows: any | any[]): Promise<QueryResult> {
     const body = Array.isArray(rows) ? rows : [rows]
     try {
@@ -205,7 +223,9 @@ export class SupabaseRestClient {
   async rpc(fn: string, params?: Record<string, any>) {
     try {
       const res = await fetch(`${this.url}/rest/v1/rpc/${fn}`, {
-        method: 'POST', headers: this.getHeaders(), body: params ? JSON.stringify(params) : '{}',
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: params ? JSON.stringify(params) : '{}',
       })
       const data = await res.json()
       if (!res.ok) return { data: null, error: { message: data.message || data.error || 'RPC failed' } }
@@ -216,12 +236,9 @@ export class SupabaseRestClient {
   }
 }
 
+// Legacy client that uses anon key (for user-facing operations)
 export async function createClient() {
   const cookieStore = await cookies()
   const accessToken = cookieStore.get('sb-access-token')?.value || null
-  return new SupabaseRestClient(SUPABASE_URL, ANON_KEY, accessToken || SERVICE_ROLE_KEY)
-}
-
-export function createServiceClient() {
-  return new SupabaseRestClient(SUPABASE_URL, SERVICE_ROLE_KEY, SERVICE_ROLE_KEY)
+  return new SupabaseRestClient(SUPABASE_URL, ANON_KEY, accessToken || null)
 }
