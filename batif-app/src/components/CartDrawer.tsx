@@ -11,6 +11,7 @@ interface CartDrawerProps {
   onCheckout: (details: {
     customerName: string;
     phone: string;
+    email?: string;
     city: string;
     address: string;
     postalCode?: string;
@@ -32,6 +33,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [customerCity, setCustomerCity] = useState('Casablanca');
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerPostal, setCustomerPostal] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
 
@@ -46,6 +48,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     const result = await onCheckout({
       customerName,
       phone: customerPhone,
+      email: customerEmail || undefined,
       city: customerCity,
       address: customerAddress,
       postalCode: customerPostal,
@@ -61,6 +64,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         setCustomerPhone('');
         setCustomerAddress('');
         setCustomerPostal('');
+        setCustomerEmail('');
         setCustomerNote('');
       }, 5000);
     } else {
@@ -196,6 +200,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     value={customerAddress}
                     onChange={(e) => setCustomerAddress(e.target.value)}
                     placeholder="Street, Building, Apartment number..."
+                    className="w-full border border-black/30 p-2.5 font-inter-tight text-sm focus:outline-hidden focus:border-black"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-normal uppercase font-inter-tight mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="For order updates (optional)"
                     className="w-full border border-black/30 p-2.5 font-inter-tight text-sm focus:outline-hidden focus:border-black"
                   />
                 </div>

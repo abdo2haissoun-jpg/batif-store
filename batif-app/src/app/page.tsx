@@ -139,6 +139,7 @@ export default function StorePage() {
   const handleCheckoutSuccess = async (orderDetails: {
     customerName: string
     phone: string
+    email?: string
     city: string
     address: string
     postalCode?: string
@@ -156,6 +157,7 @@ export default function StorePage() {
     const result = await createOrder({
       customer_name: orderDetails.customerName,
       phone: orderDetails.phone,
+      email: orderDetails.email,
       city: orderDetails.city,
       address: orderDetails.address,
       postal_code: orderDetails.postalCode,
