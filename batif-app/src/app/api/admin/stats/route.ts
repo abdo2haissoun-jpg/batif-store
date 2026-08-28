@@ -42,15 +42,19 @@ export async function GET(request: Request) {
     const productMap = new Map()
     ;(products || []).forEach((p: any) => productMap.set(p.id, p.name))
 
+    // Revenue counts only active orders (excludes cancelled)
+    const ACTIVE_REVENUE_STATUSES = ['new', 'confirmed', 'shipped', 'delivered']
+    const isActiveForRevenue = (o: any) => ACTIVE_REVENUE_STATUSES.includes(o.status)
+
     // Calculate stats
     const todayOrders = orders.filter(o => new Date(o.created_at) >= new Date(todayStart))
     const weekOrders = orders.filter(o => new Date(o.created_at) >= new Date(weekStart))
     const monthOrders = orders.filter(o => new Date(o.created_at) >= new Date(monthStart))
 
-    const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const weekRevenue = weekOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const monthRevenue = monthOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0)
+    const todayRevenue = todayOrders.filter(isActiveForRevenue).reduce((sum, o) => sum + (o.total || 0), 0)
+    const weekRevenue = weekOrders.filter(isActiveForRevenue).reduce((sum, o) => sum + (o.total || 0), 0)
+    const monthRevenue = monthOrders.filter(isActiveForRevenue).reduce((sum, o) => sum + (o.total || 0), 0)
+    const totalRevenue = orders.filter(isActiveForRevenue).reduce((sum, o) => sum + (o.total || 0), 0)
 
     const newOrders = orders.filter(o => o.status === 'new')
     const pendingOrders = orders.filter(o => ['new', 'confirmed'].includes(o.status))
@@ -89,7 +93,7 @@ export async function GET(request: Request) {
       const dayDate = new Date(now.getTime() - i * 86400000)
       const dayStr = dayDate.toISOString().split('T')[0]
       const dayLabel = dayDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-      const dayOrders = orders.filter(o => o.created_at?.startsWith(dayStr))
+      const dayOrders = orders.filter(o => o.created_at?.startsWith(dayStr) && isActiveForRevenue(o))
       salesByDay.push({
         date: dayLabel,
         revenue: dayOrders.reduce((sum, o) => sum + (o.total || 0), 0),
@@ -97,13 +101,19 @@ export async function GET(request: Request) {
       })
     }
 
-    // Top products (by order count in order_items)
-    const { data: orderItems } = await supabase
-      .from('order_items')
-      .select('product_id, product_name, quantity, unit_price')
+    // Top products (by order count in order_items, excluding cancelled orders)
+    const activeOrderIds = orders.filter(isActiveForRevenue).map(o => o.id)
+    let orderItems: any[] = []
+    if (activeOrderIds.length > 0) {
+      const { data } = await supabase
+        .from('order_items')
+        .select('product_id, product_name, quantity, unit_price, order_id')
+        .in('order_id', activeOrderIds)
+      orderItems = data || []
+    }
 
     const productSales: Record<string, { name: string; units: number; revenue: number }> = {}
-    ;(orderItems || []).forEach((item: any) => {
+    orderItems.forEach((item: any) => {
       const id = item.product_id
       if (!productSales[id]) {
         productSales[id] = { name: item.product_name || 'Unknown', units: 0, revenue: 0 }
@@ -123,7 +133,7 @@ export async function GET(request: Request) {
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
     const lastMonthOrders = orders.filter(o => {
       const d = o.created_at
-      return d >= lastMonthStart && d < lastMonthEnd
+      return d >= lastMonthStart && d < lastMonthEnd && isActiveForRevenue(o)
     })
     const lastMonthRevenue = lastMonthOrders.reduce((sum, o) => sum + (o.total || 0), 0)
     const revenueChange = lastMonthRevenue > 0 ? Math.round(((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100) : 0
