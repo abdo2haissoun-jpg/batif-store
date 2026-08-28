@@ -36,7 +36,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json()
   const supabase = createServiceClient()
   if (body.status) {
-    const { error } = await supabase.from('orders').eq('id', id).update({ status: body.status })
+    const { error } = await supabase.from('orders').update({ status: body.status }).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
   return NextResponse.json({ success: true })

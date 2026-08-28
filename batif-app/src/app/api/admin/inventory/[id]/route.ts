@@ -25,7 +25,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params
   const body = await request.json()
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_variants').eq('id', id).update({ stock: body.stock })
+  const { error } = await supabase.from('product_variants').update({ stock: body.stock }).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

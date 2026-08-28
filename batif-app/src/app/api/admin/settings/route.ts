@@ -33,10 +33,10 @@ export async function PATCH(request: Request) {
   if (!isAuthed) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json()
   const supabase = createServiceClient()
-  const { error } = await supabase.from('store_settings').eq('id', '1').update({
+  const { error } = await supabase.from('store_settings').update({
     ...body,
     updated_at: new Date().toISOString(),
-  })
+  }).eq('id', '1')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

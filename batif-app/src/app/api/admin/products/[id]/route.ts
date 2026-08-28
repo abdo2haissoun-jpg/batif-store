@@ -27,8 +27,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json()
   const supabase = createServiceClient()
   
-  // IMPORTANT: .eq() must be called BEFORE .update()
-  const { error } = await supabase.from('products').eq('id', id).update(body)
+  const { error } = await supabase.from('products').update(body).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }
@@ -39,8 +38,15 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
   const { id } = await params
   const supabase = createServiceClient()
-  
-  const { error } = await supabase.from('products').eq('id', id).delete()
-  if (error) return NextResponse.json({ error }, { status: 500 })
+
+  // Delete related data first (order: delete().eq())
+  await supabase.from('product_variants').delete().eq('product_id', id)
+  await supabase.from('product_images').delete().eq('product_id', id)
+  await supabase.from('product_colors').delete().eq('product_id', id)
+  await supabase.from('product_sizes').delete().eq('product_id', id)
+
+  // Delete the product itself
+  const { error } = await supabase.from('products').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }

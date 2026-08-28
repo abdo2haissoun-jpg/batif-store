@@ -47,7 +47,7 @@ export async function DELETE(request: Request) {
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_images').eq('id', id).delete()
+  const { error } = await supabase.from('product_images').delete().eq('id', id)
 
   if (error) return NextResponse.json({ error }, { status: 500 })
   return NextResponse.json({ success: true })

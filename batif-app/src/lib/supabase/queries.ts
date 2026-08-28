@@ -97,7 +97,7 @@ export async function adminGetOrderById(id: string) {
 
 export async function adminUpdateOrderStatus(orderId: string, status: string) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('orders').eq('id', orderId).update({ status })
+  const { error } = await supabase.from('orders').update({ status }).eq('id', orderId)
   return { error: error?.message || null }
 }
 
@@ -112,13 +112,13 @@ export async function adminCreateProduct(product: any) {
 
 export async function adminUpdateProduct(id: string, updates: any) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('products').eq('id', id).update(updates)
+  const { error } = await supabase.from('products').update(updates).eq('id', id)
   return { error: error?.message || null }
 }
 
 export async function adminDeleteProduct(id: string) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('products').eq('id', id).delete()
+  const { error } = await supabase.from('products').delete().eq('id', id)
   return { error: error?.message || null }
 }
 
@@ -131,13 +131,13 @@ export async function adminAddProductImage(image: any) {
 
 export async function adminDeleteProductImage(id: string) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_images').eq('id', id).delete()
+  const { error } = await supabase.from('product_images').delete().eq('id', id)
   return { error: error?.message || null }
 }
 
 export async function adminUpdateProductImage(id: string, updates: any) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_images').eq('id', id).update(updates)
+  const { error } = await supabase.from('product_images').update(updates).eq('id', id)
   return { error: error?.message || null }
 }
 
@@ -150,7 +150,7 @@ export async function adminAddProductColor(color: any) {
 
 export async function adminDeleteProductColor(id: string) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_colors').eq('id', id).delete()
+  const { error } = await supabase.from('product_colors').delete().eq('id', id)
   return { error: error?.message || null }
 }
 
@@ -163,7 +163,7 @@ export async function adminAddProductSize(size: any) {
 
 export async function adminDeleteProductSize(id: string) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_sizes').eq('id', id).delete()
+  const { error } = await supabase.from('product_sizes').delete().eq('id', id)
   return { error: error?.message || null }
 }
 
@@ -176,7 +176,7 @@ export async function adminAddProductVariant(variant: any) {
 
 export async function adminUpdateVariantStock(variantId: string, stock: number) {
   const supabase = createServiceClient()
-  const { error } = await supabase.from('product_variants').eq('id', variantId).update({ stock })
+  const { error } = await supabase.from('product_variants').update({ stock }).eq('id', variantId)
   return { error: error?.message || null }
 }
 
