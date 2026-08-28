@@ -144,8 +144,8 @@ export default function AddProduct() {
             </div>
             <div className="md:col-span-2">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="is_limited" checked={form.is_limited} onChange={handleFormChange} className="rounded border-gray-300 dark:border-gray-600" />
-                <span className="text-sm font-medium">Limited Edition</span>
+                <input type="checkbox" name="is_limited" checked={form.is_limited} onChange={handleFormChange} className="rounded border-gray-300 dark:border-gray-600 accent-[#FF5131]" />
+                <span className="text-sm font-medium text-black dark:text-white">Limited Edition</span>
               </label>
             </div>
             <div className="md:col-span-2">
