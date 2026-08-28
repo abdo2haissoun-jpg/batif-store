@@ -1,12 +1,7 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "installCommand": "npm install",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "buildCommand": "cd batif-app && npx next build",
+  "outputDirectory": "batif-app/.next",
+  "installCommand": "cd batif-app && npm install",
+  "framework": "nextjs",
+  "rootDirectory": "batif-app"
 }
