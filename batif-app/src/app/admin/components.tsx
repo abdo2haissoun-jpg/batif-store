@@ -207,3 +207,54 @@ export function formatRelative(date: string) {
   if (days < 7) return `${days}d ago`
   return formatDate(date)
 }
+
+// ============================================================
+// CONFIRM DIALOG COMPONENT
+// ============================================================
+interface ConfirmDialogProps {
+  open: boolean
+  title: string
+  message: string
+  confirmLabel?: string
+  cancelLabel?: string
+  danger?: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}
+
+export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false, onConfirm, onCancel }: ConfirmDialogProps) {
+  useEffect(() => {
+    if (open) {
+      const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel() }
+      document.addEventListener('keydown', handler)
+      return () => document.removeEventListener('keydown', handler)
+    }
+  }, [open, onCancel])
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/40 dark:bg-white/20 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-white dark:bg-[#111] border border-black/10 dark:border-white/10 w-full max-w-sm p-6 shadow-xl">
+        <h3 className="text-sm font-semibold text-black dark:text-white mb-2">{title}</h3>
+        <p className="text-xs text-black/50 dark:text-white/50 mb-6 leading-relaxed">{message}</p>
+        <div className="flex gap-2 justify-end">
+          <button onClick={onCancel} className="px-4 py-2 text-[11px] font-medium tracking-wide uppercase text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white transition-colors">
+            {cancelLabel}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`px-4 py-2 text-[11px] font-medium tracking-wide uppercase transition-colors ${
+              danger
+                ? 'bg-[#FF5131] text-white hover:bg-[#FF5131]/90'
+                : 'bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/90'
+            }`}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

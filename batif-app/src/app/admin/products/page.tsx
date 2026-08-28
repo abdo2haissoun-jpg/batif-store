@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { adminFetch } from '@/lib/admin-fetch'
-import { StatusBadge, cardClass, SearchInput, EmptyState } from '@/app/admin/components'
+import { StatusBadge, cardClass, SearchInput, EmptyState, ConfirmDialog } from '@/app/admin/components'
 import Link from 'next/link'
 
 interface Product {
@@ -26,6 +26,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null)
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -46,12 +47,12 @@ export default function ProductsPage() {
   }, [fetchProducts])
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this product?')) return
     setDeleting(id)
     try {
       const res = await adminFetch(`/api/admin/products/${id}`, { method: 'DELETE' })
       if (res.ok) {
         setProducts(prev => prev.filter(p => p.id !== id))
+        setConfirmDelete(null)
       }
     } catch (err) {
       console.error('Delete failed:', err)
@@ -163,7 +164,7 @@ export default function ProductsPage() {
                             Edit
                           </Link>
                           <button
-                            onClick={() => handleDelete(product.id)}
+                            onClick={() => setConfirmDelete({ id: product.id, name: product.name })}
                             disabled={deleting === product.id}
                             className="text-[11px] text-[#FF5131]/60 hover:text-[#FF5131] uppercase tracking-[0.05em] disabled:opacity-30"
                           >
@@ -189,6 +190,16 @@ export default function ProductsPage() {
           ) : undefined}
         />
       )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${confirmDelete?.name}"? This action cannot be undone.`}
+        confirmLabel={deleting ? 'Deleting...' : 'Delete'}
+        danger
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete.id)}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }
