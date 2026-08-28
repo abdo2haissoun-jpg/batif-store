@@ -18,7 +18,7 @@ export const textareaClass = "w-full px-3 py-2 border border-black/10 dark:borde
 export const labelClass = "block text-[11px] font-medium text-black/50 dark:text-white/50 mb-1 uppercase tracking-[0.08em]"
 
 // Cards & surfaces
-export const cardClass = "bg-white dark:bg-[#111] border border-black/8 dark:border-white/8"
+export const cardClass = "bg-white dark:bg-[#111] border border-black/8 dark:border-white/8 p-5 sm:p-6"
 export const sectionTitleClass = "text-xs font-semibold text-black/40 dark:text-white/40 uppercase tracking-[0.1em] mb-3"
 
 // Buttons
