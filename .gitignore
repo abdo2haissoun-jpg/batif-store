@@ -8,3 +8,4 @@ coverage/
 !.env.example
 .freebuff/
 batif store .zip
+.vercel

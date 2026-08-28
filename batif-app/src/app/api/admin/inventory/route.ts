@@ -6,11 +6,14 @@ const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 async function verifyAuth(request: Request): Promise<boolean> {
   const cookieHeader = request.headers.get('cookie') || ''
-  const tokenMatch = cookieHeader.match("sb-access-token=([^;]+)")
-  if (!tokenMatch) return false
+  const tokenMatch = cookieHeader.match(/sb-access-token=([^;]+)/)
+  const authHeader = request.headers.get('authorization') || ''
+  const bearerMatch = authHeader.match(/Bearer (.+)/)
+  const token = tokenMatch?.[1] || bearerMatch?.[1]
+  if (!token) return false
   try {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${tokenMatch[1]}` },
+      headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${token}` },
     })
     return res.ok
   } catch { return false }
@@ -23,9 +26,13 @@ export async function GET(request: Request) {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('product_variants')
-      .select(`*`)
+      .select(`*,
+        product:products(name),
+        product_colors(name, hex),
+        product_sizes(name)
+      `)
       .order('stock', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ items: data || [] })
+  return NextResponse.json({ variants: data || [] })
 }

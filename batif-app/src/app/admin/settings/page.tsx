@@ -1,57 +1,114 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import toast from 'react-hot-toast'
+import { useState } from 'react'
 import { adminFetch } from '@/lib/admin-fetch'
-import { inputClass, labelClass, cardClass, sectionTitleClass, btnPrimary } from '@/app/admin/components'
+import { cardClass, inputClass, labelClass, SectionHeader } from '@/app/admin/components'
 
-export default function AdminSettings() {
-  const [settings, setSettings] = useState({ store_name: 'BATIF STORE', store_email: 'contact@batif.store', store_phone: '+212 661 735 339', delivery_fee: 30, currency: 'MAD', instagram: '@batif.store', store_status: 'open' })
-  const [loading, setLoading] = useState(true)
+export default function SettingsPage() {
+  const [storeName, setStoreName] = useState('BATIF STORE')
+  const [storeEmail, setStoreEmail] = useState('contact@batif-store.com')
+  const [storePhone, setStorePhone] = useState('+212 6XX-XXXXXX')
+  const [currency, setCurrency] = useState('MAD')
+  const [deliveryFee, setDeliveryFee] = useState('30')
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
 
-  useEffect(() => { fetchSettings() }, [])
-  const fetchSettings = async () => {
-    try { const r = await adminFetch('/api/admin/settings'); if (r.ok) { const d = await r.json(); if (d.settings) setSettings(prev => ({ ...prev, ...d.settings })) } }
-    catch {} finally { setLoading(false) }
-  }
   const handleSave = async () => {
     setSaving(true)
+    setSaved(false)
     try {
-      const r = await adminFetch('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(settings) })
-      if (r.ok) { toast.success('Settings saved') } else { toast.error('Failed') }
-    } catch { toast.error('Failed') } finally { setSaving(false) }
+      await adminFetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storeName, storeEmail, storePhone, currency, deliveryFee }),
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
+      console.error('Save failed:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  if (loading) return <div className="text-gray-400 text-sm">Loading settings...</div>
-
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="mb-8"><h1 className="text-2xl font-bold tracking-tight">Settings</h1><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your store configuration</p></div>
+    <div className="max-w-2xl space-y-8">
+      {saved && (
+        <div className="px-3 py-2 bg-black/5 dark:bg-white/5 text-xs text-black dark:text-white">
+          Settings saved.
+        </div>
+      )}
 
-      <div className={cardClass}>
-        <h2 className={sectionTitleClass}>Store Information</h2>
+      {/* Store */}
+      <div className={`${cardClass} p-5`}>
+        <SectionHeader title="Store" subtitle="Basic store information" />
         <div className="space-y-4">
-          <div><label className={labelClass}>Store Name</label><input value={settings.store_name} onChange={(e) => setSettings(prev => ({ ...prev, store_name: e.target.value }))} className={inputClass} /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className={labelClass}>Store Email</label><input type="email" value={settings.store_email} onChange={(e) => setSettings(prev => ({ ...prev, store_email: e.target.value }))} className={inputClass} /></div>
-            <div><label className={labelClass}>Store Phone</label><input value={settings.store_phone} onChange={(e) => setSettings(prev => ({ ...prev, store_phone: e.target.value }))} className={inputClass} /></div>
+          <div>
+            <label className={labelClass}>Store Name</label>
+            <input value={storeName} onChange={e => setStoreName(e.target.value)} className={inputClass} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className={labelClass}>Delivery Fee (MAD)</label><input type="number" value={settings.delivery_fee} onChange={(e) => setSettings(prev => ({ ...prev, delivery_fee: parseFloat(e.target.value) || 0 }))} className={inputClass} /></div>
-            <div><label className={labelClass}>Currency</label><input value={settings.currency} onChange={(e) => setSettings(prev => ({ ...prev, currency: e.target.value }))} className={inputClass} /></div>
+            <div>
+              <label className={labelClass}>Email</label>
+              <input value={storeEmail} onChange={e => setStoreEmail(e.target.value)} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Phone</label>
+              <input value={storePhone} onChange={e => setStorePhone(e.target.value)} className={inputClass} />
+            </div>
           </div>
-          <div><label className={labelClass}>Instagram</label><input value={settings.instagram} onChange={(e) => setSettings(prev => ({ ...prev, instagram: e.target.value }))} className={inputClass} /></div>
-          <div><label className={labelClass}>Store Status</label>
-            <select value={settings.store_status} onChange={(e) => setSettings(prev => ({ ...prev, store_status: e.target.value }))} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#FF5131] text-sm">
-              <option value="open">Open</option><option value="closed">Closed</option>
+          <div>
+            <label className={labelClass}>Currency</label>
+            <select value={currency} onChange={e => setCurrency(e.target.value)} className={inputClass}>
+              <option value="MAD">MAD — Moroccan Dirham</option>
+              <option value="USD">USD — US Dollar</option>
+              <option value="EUR">EUR — Euro</option>
             </select>
           </div>
         </div>
       </div>
 
-      <div className="pb-8">
-        <button onClick={handleSave} disabled={saving} className={btnPrimary}>{saving ? 'Saving...' : 'Save Settings'}</button>
+      {/* Delivery */}
+      <div className={`${cardClass} p-5`}>
+        <SectionHeader title="Delivery" subtitle="Shipping configuration" />
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Delivery Fee (MAD)</label>
+            <input type="number" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Free Shipping Threshold (MAD)</label>
+            <input type="number" placeholder="0 = no free shipping" className={inputClass} />
+          </div>
+        </div>
+      </div>
+
+      {/* Account */}
+      <div className={`${cardClass} p-5`}>
+        <SectionHeader title="Account" subtitle="Admin account information" />
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Email</label>
+            <input value="abdo2.haissoun@gmail.com" disabled className={`${inputClass} opacity-50`} />
+          </div>
+          <div>
+            <label className={labelClass}>Password</label>
+            <input type="password" value="••••••••" disabled className={`${inputClass} opacity-50`} />
+            <p className="text-[11px] text-black/30 dark:text-white/30 mt-1">Change password through Supabase Auth.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Save */}
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-black/30 dark:text-white/30">Changes are saved to the admin configuration.</p>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-black dark:bg-white text-white dark:text-black px-6 py-2 text-[11px] font-medium tracking-[0.08em] uppercase hover:bg-black/80 dark:hover:bg-white/90 transition-colors disabled:opacity-30"
+        >
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
       </div>
     </div>
   )
