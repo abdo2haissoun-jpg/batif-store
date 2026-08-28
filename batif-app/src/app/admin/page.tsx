@@ -70,9 +70,9 @@ export default function DashboardPage() {
     return <EmptyState title="Unable to load dashboard" description="Check your connection and try again." />
   }
 
-  const s = data.stats
-  const revenueChange = s.monthRevenue > 0 ? 12.4 : 0
-  const orderChange = s.totalOrders > 0 ? 8.2 : 0
+  const s = data.stats as any
+  const revenueChange = s.revenueChange || 0
+  const orderChange = s.orderChange || 0
 
   // Simple bar chart for sales
   const maxRevenue = Math.max(...(data.salesByDay || []).map(d => d.revenue), 1)

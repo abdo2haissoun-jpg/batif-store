@@ -118,6 +118,17 @@ export async function GET(request: Request) {
     // Unique customers (by phone)
     const customerPhones = new Set(orders.map(o => o.phone).filter(Boolean))
 
+    // Calculate real month-over-month comparisons
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString()
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    const lastMonthOrders = orders.filter(o => {
+      const d = o.created_at
+      return d >= lastMonthStart && d < lastMonthEnd
+    })
+    const lastMonthRevenue = lastMonthOrders.reduce((sum, o) => sum + (o.total || 0), 0)
+    const revenueChange = lastMonthRevenue > 0 ? Math.round(((monthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100) : 0
+    const orderChange = lastMonthOrders.length > 0 ? Math.round(((monthOrders.length - lastMonthOrders.length) / lastMonthOrders.length) * 100) : 0
+
     return NextResponse.json({
       stats: {
         totalRevenue,
@@ -133,6 +144,8 @@ export async function GET(request: Request) {
         lowStockProducts: lowStockCount,
         outOfStockProducts: outOfStockCount,
         totalCustomers: customerPhones.size,
+        revenueChange,
+        orderChange,
       },
       recentOrders: orders.slice(0, 20),
       pendingOrders: pendingOrders.slice(0, 10),
