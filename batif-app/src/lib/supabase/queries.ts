@@ -103,11 +103,9 @@ export async function adminUpdateOrderStatus(orderId: string, status: string) {
 
 export async function adminCreateProduct(product: any) {
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('products').insert(product)
+  const { data, error } = await supabase.from('products').insert(product).select().single()
   if (error) return { error: error.message }
-  if (data?.id) return { data }
-  const { data: created } = await supabase.from('products').select('*').eq('slug', product.slug).single()
-  return { data: created }
+  return { data }
 }
 
 export async function adminUpdateProduct(id: string, updates: any) {
@@ -124,7 +122,7 @@ export async function adminDeleteProduct(id: string) {
 
 export async function adminAddProductImage(image: any) {
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('product_images').insert(image)
+  const { data, error } = await supabase.from('product_images').insert(image).select().single()
   if (error) return { error: error.message }
   return { data }
 }
@@ -143,7 +141,7 @@ export async function adminUpdateProductImage(id: string, updates: any) {
 
 export async function adminAddProductColor(color: any) {
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('product_colors').insert(color)
+  const { data, error } = await supabase.from('product_colors').insert(color).select().single()
   if (error) return { error: error.message }
   return { data }
 }
@@ -156,7 +154,7 @@ export async function adminDeleteProductColor(id: string) {
 
 export async function adminAddProductSize(size: any) {
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('product_sizes').insert(size)
+  const { data, error } = await supabase.from('product_sizes').insert(size).select().single()
   if (error) return { error: error.message }
   return { data }
 }
@@ -169,7 +167,7 @@ export async function adminDeleteProductSize(id: string) {
 
 export async function adminAddProductVariant(variant: any) {
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('product_variants').upsert(variant)
+  const { data, error } = await supabase.from('product_variants').upsert(variant).select().single()
   if (error) return { error: error.message }
   return { data }
 }

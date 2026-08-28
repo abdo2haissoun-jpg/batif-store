@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     status: body.status || 'draft',
     is_limited: body.is_limited || false,
     badge: body.badge || '',
-  })
+  }).select().single()
 
   if (error) {
     console.error('[PRODUCT POST] Error:', error.message)

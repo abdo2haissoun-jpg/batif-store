@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   console.log('[IMAGE INSERT] Received body:', JSON.stringify(body))
 
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('product_images').insert(body)
+  const { data, error } = await supabase.from('product_images').insert(body).select().single()
 
   if (error) {
     console.error('[IMAGE INSERT] Error:', error.message)
