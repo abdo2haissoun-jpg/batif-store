@@ -56,6 +56,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
+    // Skip auth check on the login page itself
+    if (pathname === '/admin/login') {
+      setLoading(false)
+      return
+    }
     const token = sessionStorage.getItem('batif_admin_token')
     if (!token) {
       router.push('/admin/login')
@@ -71,13 +76,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         setUser(data)
         setLoading(false)
       } else {
+        sessionStorage.removeItem('batif_admin_token')
         router.push('/admin/login')
       }
     }).catch(() => {
       sessionStorage.removeItem('batif_admin_token')
       router.push('/admin/login')
     })
-  }, [router])
+  }, [router, pathname])
 
   const handleLogout = () => {
     sessionStorage.removeItem('batif_admin_token')
@@ -93,12 +99,19 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   const pageTitle = PAGE_TITLES[pathname] || 'Admin'
 
+  const isLoginPage = pathname === '/admin/login'
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fafafa] dark:bg-black flex items-center justify-center">
         <div className="w-4 h-4 border border-black/20 dark:border-white/20 border-t-black dark:border-t-white rounded-full animate-spin" />
       </div>
     )
+  }
+
+  // Login page: render children directly without sidebar/topbar
+  if (isLoginPage) {
+    return <>{children}</>
   }
 
   return (
