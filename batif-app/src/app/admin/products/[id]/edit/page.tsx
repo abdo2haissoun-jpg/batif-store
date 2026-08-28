@@ -91,11 +91,11 @@ export default function EditProduct() {
     } catch (err: any) { toast.error(err.message || 'Failed') } finally { setSaving(false) }
   }
 
-  if (loading) return <div className="text-gray-400 text-sm">Loading product...</div>
+  if (loading) return <div className="text-black/40 dark:text-white/40 text-sm">Loading product...</div>
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="mb-8"><h1 className="text-2xl font-bold tracking-tight">Edit Product</h1></div>
+      <div className="mb-8"><h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Edit Product</h1></div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className={cardClass}>
           <h2 className={sectionTitleClass}>Basic Information</h2>

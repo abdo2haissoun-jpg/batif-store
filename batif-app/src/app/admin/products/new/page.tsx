@@ -100,7 +100,7 @@ export default function AddProduct() {
   return (
     <div className="max-w-4xl space-y-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Add Product</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">Add Product</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create a new product for your store</p>
       </div>
 
