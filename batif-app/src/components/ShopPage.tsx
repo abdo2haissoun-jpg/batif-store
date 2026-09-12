@@ -25,6 +25,8 @@ interface ShopPageProps {
   onToggleWishlist: (product: Product) => void;
   isWishlisted: (id: string) => boolean;
   initialCategory?: string;
+  storeFilter?: 'all' | 'clothing' | 'poster';
+  onStoreFilterChange?: (filter: 'all' | 'clothing' | 'poster') => void;
 }
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name-asc' | 'newest';
@@ -35,7 +37,9 @@ export const ShopPage: React.FC<ShopPageProps> = ({
   onQuickOrder,
   onToggleWishlist,
   isWishlisted,
-  initialCategory = 'ALL'
+  initialCategory = 'ALL',
+  storeFilter = 'all',
+  onStoreFilterChange,
 }) => {
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
@@ -232,14 +236,37 @@ export const ShopPage: React.FC<ShopPageProps> = ({
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <p className="font-inter-tight text-xs tracking-wider uppercase text-black/60 font-medium">
-                BATIF ARCHIVE / MENSWEAR
+                BATIF STORE
               </p>
               <h1 className="font-inter-tight font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-tight text-black mt-1">
-                SHOP ALL PIECES
+                SHOP ALL
               </h1>
               <p className="font-inter-tight text-xs sm:text-sm text-black/70 mt-1 max-w-lg">
-                Explore the complete seasonal range. Minimalist cuts, structured heavyweight organic fabrics, and bespoke details.
+                Art posters, prints and curated collections. Minimalist design for real spaces.
               </p>
+
+              {/* Store Type Filter: All / Posters / Clothing */}
+              {onStoreFilterChange && (
+                <div className="flex items-center gap-2 mt-4">
+                  {([
+                    { key: 'all', label: 'ALL' },
+                    { key: 'poster', label: 'POSTERS' },
+                    { key: 'clothing', label: 'CLOTHING' },
+                  ] as const).map((f) => (
+                    <button
+                      key={f.key}
+                      onClick={() => onStoreFilterChange(f.key)}
+                      className={`px-4 py-2 text-[11px] font-medium tracking-[0.1em] uppercase transition-all border cursor-pointer $
+                        storeFilter === f.key
+                          ? 'bg-black text-white border-black'
+                          : 'bg-transparent text-black/50 border-black/15 hover:border-black/40 hover:text-black'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Quick stats & Layout control */}

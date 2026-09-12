@@ -22,16 +22,28 @@ import { Product, CartItem, LegalTab } from '@/types/store'
 import { fetchProducts, createOrder } from '@/lib/store-api'
 
 export default function StorePage() {
-  const [products, setProducts] = useState<Product[]>(HARDCODED_PRODUCTS)
+  const [allProducts, setAllProducts] = useState<Product[]>(HARDCODED_PRODUCTS)
+  const [posterProducts, setPosterProducts] = useState<Product[]>([])
   const [productsLoaded, setProductsLoaded] = useState(false)
+  const [storeFilter, setStoreFilter] = useState<'all' | 'clothing' | 'poster'>('all')
 
   useEffect(() => {
+    // Fetch all products (no type filter)
     fetchProducts().then((dbProducts) => {
-      setProducts(dbProducts)
+      setAllProducts(dbProducts)
       setProductsLoaded(true)
       console.log(`[BATIF] Loaded ${dbProducts.length} products (${dbProducts === HARDCODED_PRODUCTS ? 'hardcoded fallback' : 'from Supabase'})`)
     })
+    // Fetch poster products specifically
+    fetchProducts('poster').then(setPosterProducts).catch(() => {})
   }, [])
+
+  // Derived products based on store filter
+  const products = storeFilter === 'all'
+    ? allProducts
+    : storeFilter === 'poster'
+      ? allProducts.filter(p => p.category === 'Art Poster' || p.category === 'Photo Print' || p.category === 'Illustration' || p.category === 'Typography' || p.category === 'Limited Edition')
+      : allProducts.filter(p => !['Art Poster', 'Photo Print', 'Illustration', 'Typography', 'Limited Edition'].includes(p.category))
 
   const [activeNav, setActiveNav] = useState<string>('HOME')
   const [shopCategoryFilter, setShopCategoryFilter] = useState<string>('ALL')
@@ -240,6 +252,8 @@ export default function StorePage() {
             onQuickOrder={handleQuickOrder}
             onToggleWishlist={handleToggleWishlist}
             isWishlisted={isProductWishlisted}
+            storeFilter={storeFilter}
+            onStoreFilterChange={setStoreFilter}
           />
         ) : activeNav === 'ABOUT' ? (
           <AboutPage
@@ -260,7 +274,7 @@ export default function StorePage() {
           />
         ) : (
           <PosterHomepage
-            products={products}
+            products={posterProducts.length > 0 ? posterProducts : products}
             onSelectProduct={navigateToProduct}
             onQuickOrder={handleQuickOrder}
             onNavigateShop={() => navigateToShop('ALL')}

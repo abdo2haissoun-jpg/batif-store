@@ -65,14 +65,14 @@ function mapCategory(category: string): Product['category'] {
   return 'Art Poster'
 }
 
-export async function fetchProducts(): Promise<Product[]> {
+export async function fetchProducts(productType?: string): Promise<Product[]> {
   if (!isSupabaseConfigured) {
     console.log('[BATIF] Supabase not configured, using hardcoded products')
     return HARDCODED_PRODUCTS
   }
 
   try {
-    const { data, error } = await supabase!
+    let query = supabase!
       .from('products')
       .select(`
         *,
@@ -83,6 +83,12 @@ export async function fetchProducts(): Promise<Product[]> {
       `)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
+
+    if (productType) {
+      query = query.eq('product_type', productType)
+    }
+
+    const { data, error } = await query
 
     if (error) {
       console.warn('[BATIF] Supabase query failed, using hardcoded products:', error.message)
