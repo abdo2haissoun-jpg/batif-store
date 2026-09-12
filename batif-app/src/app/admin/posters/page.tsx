@@ -499,9 +499,9 @@ export default function AdminPostersPage() {
                     + ADD SIZE
                   </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {form.sizes.map((size, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
+                    <div key={idx} className={`flex items-center gap-3 p-3 border ${isDark ? 'border-white/8 bg-white/[0.02]' : 'border-black/5 bg-black/[0.01]'}`}>
                       <input
                         type="text"
                         value={size.name}
@@ -513,7 +513,7 @@ export default function AdminPostersPage() {
                         type="number"
                         value={size.price}
                         onChange={e => updateSize(idx, 'price', e.target.value)}
-                        placeholder="Price per size (optional)"
+                        placeholder="Price for this size"
                         className={`${inputClass} flex-1`}
                       />
                       <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-black/30'}`}>MAD</span>
@@ -527,16 +527,50 @@ export default function AdminPostersPage() {
 
               {/* Images */}
               <div>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <p className={sectionTitleClass}>IMAGES</p>
-                  <button onClick={addImage} className="text-[10px] text-[#FF5131] uppercase tracking-wider hover:opacity-80">
-                    + ADD IMAGE URL
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <label className="text-[10px] text-[#FF5131] uppercase tracking-wider hover:opacity-80 cursor-pointer">
+                      + UPLOAD FILE
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          const formData = new FormData()
+                          formData.append('file', file)
+                          try {
+                            const res = await fetch('/api/admin/upload', {
+                              method: 'POST',
+                              body: formData,
+                            })
+                            const data = await res.json()
+                            if (data.url) {
+                              setForm(prev => ({
+                                ...prev,
+                                images: [
+                                  ...prev.images,
+                                  { url: data.url, image_type: prev.images.length === 0 ? 'main' : 'gallery' },
+                                ],
+                              }))
+                            }
+                          } catch (err) {
+                            console.error('Upload failed:', err)
+                          }
+                        }}
+                      />
+                    </label>
+                    <button onClick={addImage} className="text-[10px] text-[#FF5131] uppercase tracking-wider hover:opacity-80">
+                      + ADD URL
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {form.images.map((img, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className={`text-[10px] w-12 ${isDark ? 'text-white/30' : 'text-black/30'}`}>
+                    <div key={idx} className={`flex items-center gap-3 p-2 border ${isDark ? 'border-white/8' : 'border-black/5'}`}>
+                      <span className={`text-[10px] w-12 shrink-0 ${isDark ? 'text-white/30' : 'text-black/30'}`}>
                         {idx === 0 ? 'MAIN' : `#${idx + 1}`}
                       </span>
                       <input
@@ -547,11 +581,11 @@ export default function AdminPostersPage() {
                         className={`${inputClass} flex-1`}
                       />
                       {img.url && (
-                        <div className={`w-8 h-10 overflow-hidden ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                        <div className={`w-10 h-12 overflow-hidden shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                           <img src={img.url} alt="" className="w-full h-full object-cover" />
                         </div>
                       )}
-                      <button onClick={() => removeImage(idx)} className="text-[10px] text-[#FF5131] hover:opacity-80">✕</button>
+                      <button onClick={() => removeImage(idx)} className="text-[10px] text-[#FF5131] hover:opacity-80 shrink-0">✕</button>
                     </div>
                   ))}
                 </div>
