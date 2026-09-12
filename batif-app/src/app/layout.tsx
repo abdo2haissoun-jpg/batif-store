@@ -3,8 +3,8 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BATIF STORE — Contemporary Menswear",
-  description: "Contemporary men's fashion. Premium essentials. Designed in Casablanca, Morocco.",
+  title: "BATIF — Art Posters & Prints",
+  description: "Premium art posters and prints. Original artwork by Abdelatif Haissoun. Designed in Casablanca, Morocco.",
   icons: {
     icon: "/favicon.ico",
   },

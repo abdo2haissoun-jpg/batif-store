@@ -2,12 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
-import { HeroSection } from '@/components/HeroSection'
-import { FadeInView } from '@/components/FadeInView'
-import { ShopByCategory } from '@/components/ShopByCategory'
-import { PoloEditionSection } from '@/components/PoloEditionSection'
-import { FeaturedEditorialSection } from '@/components/FeaturedEditorialSection'
-import { ValuePropsBar } from '@/components/ValuePropsBar'
+import { PosterHomepage } from '@/components/PosterHomepage'
 import { ShopPage } from '@/components/ShopPage'
 import { ProductDetailPage } from '@/components/ProductDetailPage'
 import { AboutPage } from '@/components/AboutPage'
@@ -97,7 +92,7 @@ export default function StorePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleAddToCart = (product: Product, size = 'L', color = 'Standard') => {
+  const handleAddToCart = (product: Product, size = 'A2', color = 'Standard Print') => {
     setCartItems((prev) => {
       const existingIdx = prev.findIndex(
         (item) =>
@@ -119,7 +114,7 @@ export default function StorePage() {
   }
 
   const handleQuickOrder = (product: Product) => {
-    handleAddToCart(product, product.sizes[0] || 'M', product.colors[0]?.name || 'Standard')
+    handleAddToCart(product, product.sizes[1] || 'A2', product.colors[0]?.name || 'Standard Print')
     setIsCartOpen(true)
   }
 
@@ -186,7 +181,7 @@ export default function StorePage() {
   }
 
   const handleMoveWishlistToCart = (product: Product) => {
-    handleAddToCart(product, product.sizes[0] || 'M', product.colors[0]?.name || 'Standard')
+    handleAddToCart(product, product.sizes[1] || 'A2', product.colors[0]?.name || 'Standard Print')
     setWishlistItems((prev) => prev.filter((p) => p.id !== product.id))
     setIsWishlistOpen(false)
     setIsCartOpen(true)
@@ -195,9 +190,6 @@ export default function StorePage() {
   const isProductWishlisted = (id: string) => wishlistItems.some((p) => p.id === id)
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-
-  const carousel1Products = products.slice(0, 6)
-  const carousel2Products = products.slice(6, 12)
 
   return (
     <div className="min-h-screen bg-white text-black font-inter-tight selection:bg-black selection:text-white flex flex-col">
@@ -267,56 +259,14 @@ export default function StorePage() {
             onShowToast={showToast}
           />
         ) : (
-          <>
-            <HeroSection
-              heroProduct={products[0]}
-              onOrderNow={handleQuickOrder}
-              onExploreCollection={() => navigateToShop('ALL')}
-            />
-
-            <FadeInView>
-              <ShopByCategory
-                sectionId="shop-section"
-                title="EXPLORE THE COLLECTION"
-                products={carousel1Products}
-                onSelectProduct={navigateToProduct}
-                onQuickOrder={handleQuickOrder}
-                onToggleWishlist={handleToggleWishlist}
-                isWishlisted={isProductWishlisted}
-              />
-            </FadeInView>
-
-            <FadeInView>
-              <PoloEditionSection
-                onShopPolo={() => {
-                  navigateToShop('POLO EDITION')
-                }}
-              />
-            </FadeInView>
-
-            <FadeInView>
-              <ShopByCategory
-                title="MORE ESSENTIALS"
-                products={carousel2Products}
-                onSelectProduct={navigateToProduct}
-                onQuickOrder={handleQuickOrder}
-                onToggleWishlist={handleToggleWishlist}
-                isWishlisted={isProductWishlisted}
-              />
-            </FadeInView>
-
-            <FadeInView>
-              <FeaturedEditorialSection
-                onShopNow={() => {
-                  navigateToShop('T-SHIRTS')
-                }}
-              />
-            </FadeInView>
-
-            <FadeInView>
-              <ValuePropsBar />
-            </FadeInView>
-          </>
+          <PosterHomepage
+            products={products}
+            onSelectProduct={navigateToProduct}
+            onQuickOrder={handleQuickOrder}
+            onNavigateShop={() => navigateToShop('ALL')}
+            onNavigateAbout={navigateToAbout}
+            onNavigateContact={() => navigateToContact()}
+          />
         )}
       </main>
 

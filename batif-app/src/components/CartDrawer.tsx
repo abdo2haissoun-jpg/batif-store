@@ -87,7 +87,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="flex items-center gap-2">
               <span className="font-batif text-2xl tracking-wider text-black">BATIF</span>
               <span className="font-inter-tight font-normal text-sm uppercase tracking-widest text-black/60">
-                / SHOPPING BAG ({items.reduce((a, b) => a + b.quantity, 0)})
+                / YOUR SELECTION ({items.reduce((a, b) => a + b.quantity, 0)})
               </span>
             </div>
             <button
@@ -260,8 +260,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             ) : items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-16">
                 <span className="font-batif text-4xl text-black/30 mb-2">BATIF</span>
-                <p className="font-inter-tight text-base font-medium text-black">Your bag is empty.</p>
-                <p className="font-inter-tight text-xs text-black/60 mt-1">Discover our modern minimal essentials.</p>
+                <p className="font-inter-tight text-base font-medium text-black">Your selection is empty.</p>
+                <p className="font-inter-tight text-xs text-black/60 mt-1">Discover our curated art prints and posters.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -290,7 +290,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           </button>
                         </div>
                         <p className="font-inter-tight text-xs text-black/60 mt-0.5">
-                          Size: {item.selectedSize} • Color: {item.selectedColor}
+                          Format: {item.selectedSize}
                         </p>
                         <p className="font-inter-tight font-normal text-sm text-black mt-1">
                           {item.product.price.toFixed(2)} MAD
@@ -346,7 +346,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
               <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-black/60 font-inter-tight">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Inspected & verified garments • Cash on Delivery</span>
+                <span>Premium prints • Secure packaging • Cash on Delivery</span>
               </div>
             </div>
           )}

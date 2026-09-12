@@ -54,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenContact, onSh
             <div>
               <h4 className="font-inter-tight text-[10px] uppercase tracking-[0.18em] text-black/40 mb-3">Shop</h4>
               <ul className="space-y-2">
-                {['T-Shirts', 'Essentials', 'Men', 'New Arrivals'].map(i => (
+                {['All Posters', 'New Releases', 'Personal Series', 'Limited Editions'].map(i => (
                   <li key={i}>
                     <span className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">{i}</span>
                   </li>
@@ -62,10 +62,11 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenContact, onSh
               </ul>
             </div>
             <div>
-              <h4 className="font-inter-tight text-[10px] uppercase tracking-[0.18em] text-black/40 mb-3">About</h4>
+              <h4 className="font-inter-tight text-[10px] uppercase tracking-[0.18em] text-black/40 mb-3">Info</h4>
               <ul className="space-y-2">
-                <li><span onClick={onOpenAbout} className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">Our Story</span></li>
-                <li><span onClick={onOpenAbout} className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">Founder</span></li>
+                <li><span onClick={onOpenAbout} className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">About the Artist</span></li>
+                <li><span className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">Print & Paper</span></li>
+                <li><span className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">Shipping</span></li>
                 <li><span onClick={onOpenContact} className="font-inter-tight text-xs text-black/60 hover:text-black transition-colors cursor-pointer">Contact</span></li>
               </ul>
             </div>
@@ -80,12 +81,27 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAbout, onOpenContact, onSh
           </div>
         </div>
 
+        {/* Bottom bar with delivery info */}
+        <div className="border-t border-black px-6 sm:px-8 lg:px-10 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <p className="font-inter-tight text-[10px] sm:text-[11px] text-black/50 uppercase tracking-[0.12em]">
+              DELIVERY ACROSS MOROCCO
+            </p>
+            <p className="font-inter-tight text-[10px] sm:text-[11px] text-black/50 uppercase tracking-[0.12em]">
+              SECURE PACKAGING
+            </p>
+            <p className="font-inter-tight text-[10px] sm:text-[11px] text-black/50 uppercase tracking-[0.12em]">
+              CASH ON DELIVERY
+            </p>
+          </div>
+        </div>
+
         <div className="border-t border-black px-3 sm:px-5 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="font-inter-tight text-[10px] sm:text-[11px] text-black/50 uppercase tracking-[0.15em]">
-            &copy; 2026 Batif Store
+            &copy; 2026 BATIF
           </p>
           <p className="font-inter-tight text-[10px] sm:text-[11px] text-black/50 uppercase tracking-[0.15em]">
-            Morocco / MAD
+            ART BY ABDELATIF HAISSOUN
           </p>
         </div>
       </div>

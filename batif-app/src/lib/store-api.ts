@@ -57,12 +57,12 @@ function mapSupabaseProduct(row: any): Product {
 
 function mapCategory(category: string): Product['category'] {
   const upper = category?.toUpperCase() || ''
-  if (upper.includes('T-SHIRT') || upper.includes('TEE')) return 'T-Shirts'
-  if (upper.includes('OUTER') || upper.includes('JACKET') || upper.includes('SHELL') || upper.includes('ANORAK')) return 'Outerwear'
-  if (upper.includes('POLO')) return 'Polo Edition'
-  if (upper.includes('SHORT')) return 'Shorts'
-  if (upper.includes('ACC') || upper.includes('BAG') || upper.includes('CAP')) return 'Accessories'
-  return 'T-Shirts'
+  if (upper.includes('POSTER') || upper.includes('ART')) return 'Art Poster'
+  if (upper.includes('PHOTO')) return 'Photo Print'
+  if (upper.includes('ILLUST')) return 'Illustration'
+  if (upper.includes('TYPO')) return 'Typography'
+  if (upper.includes('LIMIT')) return 'Limited Edition'
+  return 'Art Poster'
 }
 
 export async function fetchProducts(): Promise<Product[]> {

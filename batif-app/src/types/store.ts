@@ -1,7 +1,7 @@
 export interface Product {
   id: string;
   name: string;
-  category: 'T-Shirts' | 'Outerwear' | 'Polo Edition' | 'Shorts' | 'Accessories';
+  category: 'Art Poster' | 'Photo Print' | 'Illustration' | 'Typography' | 'Limited Edition';
   price: number;
   originalPrice?: number;
   image: string;
@@ -31,4 +31,3 @@ export interface CartItem {
 export type Currency = 'USD' | 'MAD' | 'EUR';
 
 export type LegalTab = 'TERMS' | 'PRIVACY' | 'COOKIE_POLICY' | 'COOKIE_PREFERENCES';
-
