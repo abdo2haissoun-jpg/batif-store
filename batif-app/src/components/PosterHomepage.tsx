@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Product } from '@/types/store';
 
@@ -14,40 +14,28 @@ interface PosterHomepageProps {
 /* ─── Mockup Gallery Data ──────────────────────────── */
 const MOCKUP_SLIDES = [
   {
-    image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=1600&q=80',
     poster: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80',
     caption: 'PEACE OF MIND',
-    sub: 'In a minimalist living room',
   },
   {
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1600&q=80',
     poster: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&q=80',
     caption: 'THE DREAM',
-    sub: 'Above a modern desk setup',
   },
   {
-    image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1600&q=80',
     poster: 'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=800&q=80',
     caption: 'HAVE A GOOD TIME',
-    sub: 'In a contemporary bedroom',
   },
   {
-    image: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1600&q=80',
     poster: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
     caption: 'SERIES 04',
-    sub: 'A gallery wall composition',
   },
   {
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600&q=80',
     poster: 'https://images.unsplash.com/photo-1549490349-8643362247b5?w=800&q=80',
     caption: 'SERIES 05',
-    sub: 'In a bright open-space interior',
   },
   {
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&q=80',
     poster: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80',
     caption: 'SERIES 06',
-    sub: 'Framed in a modern entryway',
   },
 ];
 
@@ -85,8 +73,7 @@ export const PosterHomepage: React.FC<PosterHomepageProps> = ({
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
-  const [galleryIndex, setGalleryIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+
 
   const scroll = (dir: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -98,22 +85,7 @@ export const PosterHomepage: React.FC<PosterHomepageProps> = ({
     }
   };
 
-  /* ─── Auto-sliding gallery ──────────────────────── */
-  const totalSlides = MOCKUP_SLIDES.length;
 
-  const nextSlide = useCallback(() => {
-    setGalleryIndex((prev) => (prev + 1) % totalSlides);
-  }, [totalSlides]);
-
-  const prevSlide = useCallback(() => {
-    setGalleryIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
-  }, [totalSlides]);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const interval = setInterval(nextSlide, 4000);
-    return () => clearInterval(interval);
-  }, [isPaused, nextSlide]);
 
   /* ─── Personal Series auto-scroll ─────────────────── */
   const seriesRef = useRef<HTMLDivElement>(null);
@@ -384,104 +356,93 @@ export const PosterHomepage: React.FC<PosterHomepageProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════
-          5. MOCKUP GALLERY — Auto-sliding Interiors
+          5. MOCKUP GALLERY — 3-Card Auto-Scroll
           ═══════════════════════════════════════════════ */}
-      <section
-        className="w-full py-12 sm:py-20 max-w-[1878px] mx-auto overflow-hidden"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
+      <section className="w-full py-12 sm:py-20 overflow-hidden">
         {/* Header */}
-        <div className="px-3 sm:px-5 lg:px-6 mb-6 sm:mb-10 flex items-end justify-between">
-          <div>
-            <p className="font-inter-tight text-[10px] sm:text-[11px] tracking-[0.2em] text-black/40 uppercase mb-2">
-              IN SITU
-            </p>
-            <h2 className="font-inter-tight font-medium text-base sm:text-lg lg:text-xl text-black tracking-[-0.01em] uppercase">
-              SEE THEM ON YOUR WALLS
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={prevSlide}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors duration-300 cursor-pointer"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M10 3L5 8L10 13" />
-              </svg>
-            </button>
-            <button
-              onClick={nextSlide}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors duration-300 cursor-pointer"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M6 3L11 8L6 13" />
-              </svg>
-            </button>
-          </div>
+        <div className="px-3 sm:px-5 lg:px-6 mb-8 sm:mb-14 max-w-[1878px] mx-auto">
+          <p className="font-inter-tight text-[10px] sm:text-[11px] tracking-[0.2em] text-black/40 uppercase mb-2">
+            IN SITU
+          </p>
+          <h2 className="font-inter-tight font-medium text-base sm:text-lg lg:text-xl text-black tracking-[-0.01em] uppercase">
+            SEE THEM ON YOUR WALLS
+          </h2>
         </div>
 
-        {/* Gallery Slides */}
-        <div className="px-3 sm:px-5 lg:px-6">
-          <div className="relative w-full h-[400px] sm:h-[520px] md:h-[600px] lg:h-[720px] xl:h-[840px] overflow-hidden bg-[#F5F5F5]">
-            {MOCKUP_SLIDES.map((slide, idx) => (
-              <div
-                key={idx}
-                className="absolute inset-0 transition-opacity duration-700 ease-in-out"
-                style={{ opacity: idx === galleryIndex ? 1 : 0, pointerEvents: idx === galleryIndex ? 'auto' : 'none' }}
-              >
-                {/* Interior background */}
-                <img
-                  src={slide.image}
-                  alt={`${slide.caption} — displayed in interior`}
-                  className="w-full h-full object-cover object-center"
-                  loading="lazy"
-                />
-                {/* Overlay poster mockup */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35%] sm:w-[28%] md:w-[24%] lg:w-[20%] aspect-[3/4] shadow-2xl border border-white/20 overflow-hidden">
-                  <img
-                    src={slide.poster}
-                    alt={slide.caption}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                {/* Caption */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-5 sm:p-8 lg:p-10">
-                  <p className="font-inter-tight font-medium text-[11px] sm:text-xs tracking-[0.2em] text-white/70 uppercase mb-1">
-                    {slide.sub}
-                  </p>
-                  <h3 className="font-inter-tight font-normal text-lg sm:text-xl md:text-2xl text-white tracking-[-0.01em] uppercase">
-                    {slide.caption}
-                  </h3>
-                </div>
-              </div>
-            ))}
+        {/* Infinite Auto-Scroll Marquee */}
+        <div className="relative">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
 
-            {/* Slide counter */}
-            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
-              <span className="font-inter-tight text-[11px] sm:text-xs tracking-wider text-white/80 font-medium">
-                {String(galleryIndex + 1).padStart(2, '0')} / {String(totalSlides).padStart(2, '0')}
-              </span>
-            </div>
-          </div>
-
-          {/* Progress dots */}
-          <div className="flex items-center justify-center gap-2 mt-4 sm:mt-6">
-            {MOCKUP_SLIDES.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setGalleryIndex(idx)}
-                className={`transition-all duration-300 cursor-pointer ${
-                  idx === galleryIndex
-                    ? 'w-6 h-1.5 bg-black'
-                    : 'w-1.5 h-1.5 bg-black/20 hover:bg-black/40'
-                }`}
-              />
-            ))}
+          {/* Scrolling track */}
+          <div className="flex gap-5 sm:gap-8 lg:gap-10 animate-marquee w-max">
+            {/* Duplicate set for seamless loop */}
+            {[...MOCKUP_SLIDES, ...MOCKUP_SLIDES].map((slide, idx) => {
+              const pos = idx % 3;
+              const isCenter = pos === 1;
+              return (
+                <div
+                  key={idx}
+                  className={`flex-none group cursor-pointer ${
+                    isCenter
+                      ? 'w-[300px] sm:w-[420px] md:w-[500px] lg:w-[580px] xl:w-[640px]'
+                      : 'w-[240px] sm:w-[320px] md:w-[380px] lg:w-[440px] xl:w-[480px]'
+                  }`}
+                  style={{
+                    marginTop: isCenter ? '0' : '40px',
+                  }}
+                >
+                  <div
+                    className={`relative w-full overflow-hidden bg-[#F5F5F5] ${
+                      isCenter
+                        ? 'aspect-[3/4]'
+                        : 'aspect-[4/5]'
+                    }`}
+                  >
+                    <img
+                      src={slide.poster}
+                      alt={slide.caption}
+                      className="w-full h-full object-cover object-center group-hover:scale-[1.04] transition-transform duration-700 ease-out"
+                      loading="lazy"
+                    />
+                    {/* Subtle hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
+                  </div>
+                  {/* Caption — only on center card */}
+                  {isCenter && (
+                    <div className="mt-4 sm:mt-5">
+                      <p className="font-inter-tight text-[11px] sm:text-xs text-black/40 tracking-wider uppercase">
+                        ART POSTER #{String((idx % MOCKUP_SLIDES.length) + 1).padStart(2, '0')}
+                      </p>
+                      <h4 className="font-inter-tight font-medium text-sm sm:text-base text-black tracking-[-0.01em] mt-0.5">
+                        {slide.caption}
+                      </h4>
+                      <p className="font-inter-tight text-[10px] sm:text-[11px] text-black/40 tracking-wider mt-0.5">
+                        PERSONAL SERIES © 2026
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
+
+      {/* Inline keyframe for marquee */}
+      <style jsx>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
 
       {/* ═══════════════════════════════════════════════
           6. MORE POSTERS — Second Collection Row
