@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { inputClass, selectClass, textareaClass, labelClass, cardClass, sectionTitleClass, btnPrimary, btnSecondary, btnOrange } from '../../../components'
+import { fastUploadMany } from '@/lib/fast-upload'
 
 const CATEGORIES = ['Art Poster', 'Photo Print', 'Illustration', 'Typography', 'Limited Edition']
 const MATERIALS = ['Premium Matte Paper', 'Textured Fine Art Paper', 'Glossy Photo Paper', 'Canvas Print', 'Framed Print']
@@ -15,6 +16,7 @@ export default function EditPosterPage() {
 
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -64,36 +66,22 @@ export default function EditPosterPage() {
     setUploading(true)
     setError('')
 
-    const token = sessionStorage.getItem('batif_admin_token') || ''
-    const uploadedUrls: string[] = []
+    const { results, errors } = await fastUploadMany(
+      Array.from(files),
+      'products',
+      'posters',
+      (done, total) => setUploadProgress(`Uploading ${done} / ${total}…`)
+    )
 
-    for (const file of Array.from(files)) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('bucket', 'products')
-      formData.append('folder', 'posters')
-
-      try {
-        const res = await fetch('/api/admin/upload', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData,
-        })
-        const data = await res.json()
-        if (data.url) {
-          uploadedUrls.push(data.url)
-        } else {
-          setError(`Failed to upload ${file.name}: ${data.error || 'Unknown error'}`)
-        }
-      } catch (err: any) {
-        setError(`Failed to upload ${file.name}: ${err.message}`)
-      }
+    if (results.length > 0) {
+      setImages(prev => [...prev, ...results.map(r => ({ url: r.url }))])
+    }
+    if (errors.length > 0) {
+      setError(errors.join(' · '))
     }
 
-    if (uploadedUrls.length > 0) {
-      setImages(prev => [...prev, ...uploadedUrls.map(url => ({ url }))])
-    }
     setUploading(false)
+    setUploadProgress('')
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -333,7 +321,7 @@ export default function EditPosterPage() {
               onChange={e => handleUpload(e.target.files)}
             />
             {uploading ? (
-              <span className="text-xs text-black/50 dark:text-white/50">Uploading…</span>
+              <span className="text-xs text-black/50 dark:text-white/50">{uploadProgress || 'Uploading…'}</span>
             ) : (
               <>
                 <span className="block text-sm text-black dark:text-white font-medium">Click to upload images</span>
