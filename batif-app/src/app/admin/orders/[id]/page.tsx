@@ -104,9 +104,32 @@ export default function OrderDetailPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to update status')
-      setOrder({ ...order, status })
+      // The PATCH already ensures email is sent server-side via the status route
+      // But the order detail page PATCH doesn't go through the email path — route via status API too
+      const statusRes = await fetch('/api/admin/orders/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ order_id: order.id, status }),
+      })
+      let patchOk = true
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Failed to update status')
+      }
+
+      // Also fire the status API to trigger email notifications
+      const statusData = await statusRes.json()
+      if (!statusRes.ok) {
+        console.warn('[OrderDetail] Status API returned non-OK:', statusData.error)
+      }
+
+      // Show email result if available
+      if (statusData.email_sent === false && statusData.email_error) {
+        console.log('[OrderDetail] Email not sent:', statusData.email_error)
+      }
+
+      // Re-fetch order from detail endpoint to get fresh data
+      await fetchOrder()
     } catch (err: any) {
       setError(err.message)
     } finally {
