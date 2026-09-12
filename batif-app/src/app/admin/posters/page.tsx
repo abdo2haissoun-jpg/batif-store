@@ -507,14 +507,14 @@ export default function AdminPostersPage() {
                         value={size.name}
                         onChange={e => updateSize(idx, 'name', e.target.value)}
                         placeholder="A1"
-                        className={`${inputClass} w-[100px]`}
+                        className={`${inputClass} w-[80px] shrink-0`}
                       />
                       <input
                         type="number"
                         value={size.price}
                         onChange={e => updateSize(idx, 'price', e.target.value)}
                         placeholder="Price for this size"
-                        className={`${inputClass} flex-1`}
+                        className={`${inputClass} w-[180px]`}
                       />
                       <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-black/30'}`}>MAD</span>
                       {form.sizes.length > 1 && (
@@ -539,11 +539,15 @@ export default function AdminPostersPage() {
                         onChange={async (e) => {
                           const file = e.target.files?.[0]
                           if (!file) return
+                          const token = sessionStorage.getItem('batif_admin_token') || ''
                           const formData = new FormData()
                           formData.append('file', file)
+                          formData.append('bucket', 'products')
+                          formData.append('folder', 'posters')
                           try {
                             const res = await fetch('/api/admin/upload', {
                               method: 'POST',
+                              headers: { 'Authorization': `Bearer ${token}` },
                               body: formData,
                             })
                             const data = await res.json()
@@ -555,9 +559,12 @@ export default function AdminPostersPage() {
                                   { url: data.url, image_type: prev.images.length === 0 ? 'main' : 'gallery' },
                                 ],
                               }))
+                            } else {
+                              alert('Upload failed: ' + (data.error || 'Unknown error'))
                             }
-                          } catch (err) {
+                          } catch (err: any) {
                             console.error('Upload failed:', err)
+                            alert('Upload failed: ' + err.message)
                           }
                         }}
                       />

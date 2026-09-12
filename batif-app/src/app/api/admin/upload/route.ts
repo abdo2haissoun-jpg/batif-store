@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase/server'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 async function verifyAuth(request: Request): Promise<boolean> {
   const cookieHeader = request.headers.get('cookie') || ''
   const authHeader = request.headers.get('authorization') || ''
-  const cookieMatch = cookieHeader.match(/sb-access-token=([^;\s]+)/)
+  const cookieMatch = cookieHeader.match(/sb-access-token=([^\s;]+)/)
   const bearerMatch = authHeader.match(/Bearer\s+(.+)/i)
   const token = cookieMatch?.[1] || bearerMatch?.[1]
   if (!token) return false
@@ -17,49 +17,6 @@ async function verifyAuth(request: Request): Promise<boolean> {
     })
     return res.ok
   } catch { return false }
-}
-
-async function ensureBucket(bucketName: string): Promise<boolean> {
-  // List existing buckets
-  const listRes = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
-    headers: {
-      'apikey': SERVICE_ROLE_KEY,
-      'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-    },
-  })
-
-  if (listRes.ok) {
-    const buckets = await listRes.json()
-    const exists = buckets.some((b: any) => b.id === bucketName || b.name === bucketName)
-    if (exists) return true
-  }
-
-  // Create the bucket
-  console.log(`[UPLOAD] Creating bucket: ${bucketName}`)
-  const createRes = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
-    method: 'POST',
-    headers: {
-      'apikey': SERVICE_ROLE_KEY,
-      'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: bucketName,
-      name: bucketName,
-      public: true,
-      file_size_limit: 10485760, // 10MB
-      allowed_mime_types: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
-    }),
-  })
-
-  if (!createRes.ok) {
-    const err = await createRes.json().catch(() => ({ message: createRes.statusText }))
-    console.error('[UPLOAD] Failed to create bucket:', err.message || err)
-    return false
-  }
-
-  console.log(`[UPLOAD] Bucket created: ${bucketName}`)
-  return true
 }
 
 export async function POST(request: Request) {
@@ -78,11 +35,7 @@ export async function POST(request: Request) {
 
     console.log(`[UPLOAD] File: ${file.name}, Size: ${file.size}, Type: ${file.type}`)
 
-    // Ensure bucket exists
-    const bucketReady = await ensureBucket(bucket)
-    if (!bucketReady) {
-      return NextResponse.json({ error: 'Storage bucket not available' }, { status: 500 })
-    }
+    const supabase = createServiceClient()
 
     // Generate unique filename
     const ext = file.name.split('.').pop() || 'jpg'
@@ -92,26 +45,47 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer()
     const uint8Array = new Uint8Array(arrayBuffer)
 
-    // Upload to Supabase Storage
-    const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${filename}`, {
-      method: 'POST',
-      headers: {
-        'apikey': SERVICE_ROLE_KEY,
-        'Authorization': `Bearer ${SERVICE_ROLE_KEY}`,
-        'Content-Type': file.type || 'image/jpeg',
-        'x-upsert': 'true',
-      },
-      body: uint8Array,
-    })
+    // Try uploading — if bucket doesn't exist, create it and retry
+    let { error } = await supabase.storage
+      .from(bucket)
+      .upload(filename, uint8Array, {
+        contentType: file.type || 'image/jpeg',
+        upsert: true,
+      })
 
-    if (!uploadRes.ok) {
-      const err = await uploadRes.json().catch(() => ({ message: uploadRes.statusText }))
-      console.error('[UPLOAD] Storage error:', err.message || err)
-      return NextResponse.json({ error: err.message || 'Upload failed' }, { status: 500 })
+    if (error) {
+      console.log('[UPLOAD] Upload failed, trying to create bucket:', error.message)
+      const { error: createErr } = await supabase.storage.createBucket(bucket, {
+        public: true,
+        fileSizeLimit: 10485760,
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+      })
+
+      if (createErr && !createErr.message?.includes('already exists')) {
+        console.error('[UPLOAD] Failed to create bucket:', createErr.message)
+        return NextResponse.json({ error: 'Storage bucket not available: ' + createErr.message }, { status: 500 })
+      }
+
+      // Retry upload
+      const retry = await supabase.storage
+        .from(bucket)
+        .upload(filename, uint8Array, {
+          contentType: file.type || 'image/jpeg',
+          upsert: true,
+        })
+
+      if (retry.error) {
+        console.error('[UPLOAD] Retry failed:', retry.error.message)
+        return NextResponse.json({ error: retry.error.message }, { status: 500 })
+      }
     }
 
     // Get public URL
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filename}`
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filename)
+
+    const publicUrl = urlData.publicUrl
     console.log(`[UPLOAD] Success: ${publicUrl}`)
 
     return NextResponse.json({ url: publicUrl, path: filename })
