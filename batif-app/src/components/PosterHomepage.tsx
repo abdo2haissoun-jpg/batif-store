@@ -384,42 +384,7 @@ export const PosterHomepage: React.FC<PosterHomepageProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════
-          5. SHOP BY FORMAT
-          ═══════════════════════════════════════════════ */}
-      <section className="w-full px-3 sm:px-5 lg:px-6 py-12 sm:py-20 max-w-[1878px] mx-auto">
-        <h2 className="font-inter-tight font-medium text-base sm:text-lg lg:text-xl text-black tracking-[-0.01em] uppercase border-b border-black pb-3 mb-8 sm:mb-12">
-          FIND YOUR FORMAT
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
-          {[
-            { size: 'A3', dim: '29.7 × 42 CM', desc: 'Compact and versatile' },
-            { size: 'A2', dim: '42 × 59.4 CM', desc: 'Our most popular format' },
-            { size: 'A1', dim: '59.4 × 84.1 CM', desc: 'Statement piece' },
-          ].map((format) => (
-            <div
-              key={format.size}
-              className="group border border-black p-6 sm:p-8 lg:p-10 flex flex-col items-start hover:bg-black hover:text-white transition-colors duration-500 cursor-pointer"
-              onClick={onNavigateShop}
-            >
-              <span className="font-inter-tight font-normal text-[48px] sm:text-[64px] md:text-[72px] lg:text-[84px] leading-none tracking-[-0.04em] select-none">
-                {format.size}
-              </span>
-              <div className="mt-4 sm:mt-6 pt-4 border-t border-black/15 group-hover:border-white/30 w-full">
-                <p className="font-inter-tight font-normal text-xs sm:text-sm tracking-wider uppercase text-black/60 group-hover:text-white/60">
-                  {format.dim}
-                </p>
-                <p className="font-inter-tight font-normal text-xs text-black/40 group-hover:text-white/50 mt-1">
-                  {format.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════
-          6. MOCKUP GALLERY — Auto-sliding Interiors
+          5. MOCKUP GALLERY — Auto-sliding Interiors
           ═══════════════════════════════════════════════ */}
       <section
         className="w-full py-12 sm:py-20 max-w-[1878px] mx-auto overflow-hidden"
@@ -519,7 +484,7 @@ export const PosterHomepage: React.FC<PosterHomepageProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════
-          7. MORE POSTERS — Second Collection Row
+          6. MORE POSTERS — Second Collection Row
           ═══════════════════════════════════════════════ */}
       <section className="w-full px-3 sm:px-5 lg:px-6 py-8 sm:py-12 max-w-[1878px] mx-auto">
         <div className="flex items-center justify-between border-b border-black pb-3 mb-5 sm:mb-6">
@@ -568,50 +533,55 @@ export const PosterHomepage: React.FC<PosterHomepageProps> = ({
       </section>
 
       {/* ═══════════════════════════════════════════════
-          8. WHY BATIF — 4-Column Value Props
+          7. WHY BATIF + VALUE PROPS — Combined
           ═══════════════════════════════════════════════ */}
-      <section className="w-full px-3 sm:px-5 lg:px-6 py-8 sm:py-12 max-w-[1878px] mx-auto">
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border border-black divide-y md:divide-y-0 md:divide-x divide-black">
-          {[
-            { title: 'ORIGINAL ARTWORK', desc: 'Created by Abdelatif Haissoun' },
-            { title: 'PREMIUM PRINT', desc: 'Rich color and sharp detail' },
-            { title: 'LIMITED SERIES', desc: 'Selected artworks released as curated collections' },
-            { title: 'MADE TO LIVE WITH', desc: 'Art designed for real spaces' },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              className="h-auto sm:h-[120px] lg:h-[140px] px-5 sm:px-6 py-5 sm:py-0 flex flex-col justify-center group hover:bg-neutral-50 transition-colors"
-            >
-              <h3 className="font-inter-tight font-medium text-[11px] sm:text-xs tracking-[0.15em] uppercase text-black mb-1.5">
-                {item.title}
-              </h3>
-              <p className="font-inter-tight font-normal text-xs sm:text-[13px] text-black/60 leading-relaxed">
-                {item.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <section className="w-full px-3 sm:px-5 lg:px-6 py-12 sm:py-16 max-w-[1878px] mx-auto">
+        <div className="border border-black">
+          {/* Top Row: 4 Value Props */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-black border-b border-black">
+            {[
+              { label: '01', title: 'ORIGINAL ARTWORK', desc: 'Created by Abdelatif Haissoun' },
+              { label: '02', title: 'PREMIUM PRINT', desc: 'Rich color and sharp detail' },
+              { label: '03', title: 'LIMITED SERIES', desc: 'Curated collections' },
+              { label: '04', title: 'MADE TO LIVE WITH', desc: 'Art for real spaces' },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className={`px-5 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col justify-center group hover:bg-black hover:text-white transition-colors duration-400 cursor-default ${idx >= 2 ? 'border-t lg:border-t-0 border-black/10 lg:border-t-0' : ''}`}
+              >
+                <span className="font-inter-tight font-normal text-[10px] sm:text-[11px] text-black/30 group-hover:text-white/30 tracking-wider mb-2">
+                  {item.label}
+                </span>
+                <h3 className="font-inter-tight font-medium text-[11px] sm:text-xs tracking-[0.12em] uppercase text-black group-hover:text-white mb-1">
+                  {item.title}
+                </h3>
+                <p className="font-inter-tight font-normal text-xs text-black/50 group-hover:text-white/50 leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
 
-      {/* ═══════════════════════════════════════════════
-          9. VALUE PROPS BAR
-          ═══════════════════════════════════════════════ */}
-      <section className="w-full px-3 sm:px-5 lg:px-6 py-4 sm:py-6 max-w-[1878px] mx-auto">
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 border border-black divide-y md:divide-y-0 md:divide-x divide-black bg-white">
-          {[
-            'DELIVERY ACROSS MOROCCO',
-            'SECURE PACKAGING',
-            'CASH ON DELIVERY AVAILABLE',
-          ].map((perk, index) => (
-            <div
-              key={index}
-              className="h-[76px] sm:h-[90px] lg:h-[104px] px-4 sm:px-6 flex items-center justify-center text-center hover:bg-neutral-50 transition-colors"
-            >
-              <h3 className="font-inter-tight font-normal text-xs sm:text-[13px] lg:text-[14px] leading-snug text-black tracking-wider uppercase select-none">
-                {perk}
-              </h3>
-            </div>
-          ))}
+          {/* Bottom Row: 3 Service Perks */}
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-black">
+            {[
+              { icon: '→', text: 'DELIVERY ACROSS MOROCCO' },
+              { icon: '◆', text: 'SECURE PACKAGING' },
+              { icon: '◉', text: 'CASH ON DELIVERY' },
+            ].map((perk, idx) => (
+              <div
+                key={idx}
+                className="px-5 sm:px-6 lg:px-8 py-5 sm:py-6 flex items-center gap-3 hover:bg-neutral-50 transition-colors group cursor-default"
+              >
+                <span className="font-inter-tight text-[10px] text-black/30 group-hover:text-[#FF5131] transition-colors shrink-0">
+                  {perk.icon}
+                </span>
+                <span className="font-inter-tight font-normal text-[11px] sm:text-xs tracking-[0.12em] text-black/70 uppercase select-none">
+                  {perk.text}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>
