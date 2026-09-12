@@ -17,37 +17,30 @@ import { ContactPage } from '@/components/ContactPage'
 import { AboutModal } from '@/components/AboutModal'
 import { CookiePreferencesModal } from '@/components/CookiePreferencesModal'
 import { Toast } from '@/components/Toast'
-import { PRODUCTS as HARDCODED_PRODUCTS } from '@/data/products'
 import { Product, CartItem, LegalTab } from '@/types/store'
 import { fetchProducts, createOrder } from '@/lib/store-api'
 
 export default function StorePage() {
-  const [allProducts, setAllProducts] = useState<Product[]>(HARDCODED_PRODUCTS)
-  const [posterProducts, setPosterProducts] = useState<Product[]>([])
+  const [allProducts, setAllProducts] = useState<Product[]>([])
   const [productsLoaded, setProductsLoaded] = useState(false)
   const [storeFilter, setStoreFilter] = useState<'all' | 'clothing' | 'poster'>('all')
 
   useEffect(() => {
-    // Fetch all products (no type filter)
     fetchProducts().then((dbProducts) => {
       setAllProducts(dbProducts)
       setProductsLoaded(true)
-      console.log(`[BATIF] Loaded ${dbProducts.length} products (${dbProducts === HARDCODED_PRODUCTS ? 'hardcoded fallback' : 'from Supabase'})`)
+      console.log(`[BATIF] Loaded ${dbProducts.length} products from Supabase`)
     })
-    // Fetch poster products specifically
-    fetchProducts('poster').then(setPosterProducts).catch(() => {})
   }, [])
 
   // Derived products based on store filter
   const products = storeFilter === 'all'
     ? allProducts
-    : storeFilter === 'poster'
-      ? allProducts.filter(p => p.category === 'Art Poster' || p.category === 'Photo Print' || p.category === 'Illustration' || p.category === 'Typography' || p.category === 'Limited Edition')
-      : allProducts.filter(p => !['Art Poster', 'Photo Print', 'Illustration', 'Typography', 'Limited Edition'].includes(p.category))
+    : allProducts
 
   const [activeNav, setActiveNav] = useState<string>('HOME')
   const [shopCategoryFilter, setShopCategoryFilter] = useState<string>('ALL')
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(products[0])
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [currentLegalTab, setCurrentLegalTab] = useState<LegalTab>('TERMS')
 
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false)
@@ -274,7 +267,7 @@ export default function StorePage() {
           />
         ) : (
           <PosterHomepage
-            products={posterProducts.length > 0 ? posterProducts : products}
+            products={allProducts}
             onSelectProduct={navigateToProduct}
             onQuickOrder={handleQuickOrder}
             onNavigateShop={() => navigateToShop('ALL')}

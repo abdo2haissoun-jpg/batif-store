@@ -1,6 +1,5 @@
 import { supabase, isSupabaseConfigured } from './store-supabase'
 import { Product } from '@/types/store'
-import { PRODUCTS as HARDCODED_PRODUCTS } from '@/data/products'
 
 // Map Supabase product rows to our Product type
 function mapSupabaseProduct(row: any): Product {
@@ -67,8 +66,8 @@ function mapCategory(category: string): Product['category'] {
 
 export async function fetchProducts(productType?: string): Promise<Product[]> {
   if (!isSupabaseConfigured) {
-    console.log('[BATIF] Supabase not configured, using hardcoded products')
-    return HARDCODED_PRODUCTS
+    console.warn('[BATIF] Supabase not configured')
+    return []
   }
 
   try {
@@ -91,26 +90,21 @@ export async function fetchProducts(productType?: string): Promise<Product[]> {
     const { data, error } = await query
 
     if (error) {
-      console.warn('[BATIF] Supabase query failed, using hardcoded products:', error.message)
-      return HARDCODED_PRODUCTS
+      console.warn('[BATIF] Supabase query failed:', error.message)
+      return []
     }
 
-    if (!data || data.length === 0) {
-      console.log('[BATIF] No published products in database, using hardcoded products')
-      return HARDCODED_PRODUCTS
-    }
-
-    console.log(`[BATIF] Loaded ${data.length} products from Supabase`)
-    return data.map(mapSupabaseProduct)
+    console.log(`[BATIF] Loaded ${data?.length || 0} products from Supabase`)
+    return (data || []).map(mapSupabaseProduct)
   } catch (err) {
-    console.warn('[BATIF] Network error, using hardcoded products:', err)
-    return HARDCODED_PRODUCTS
+    console.warn('[BATIF] Network error fetching products:', err)
+    return []
   }
 }
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
   if (!isSupabaseConfigured) {
-    return HARDCODED_PRODUCTS.find(p => p.id === slug) || null
+    return null
   }
 
   try {
@@ -128,12 +122,12 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
       .single()
 
     if (error || !data) {
-      return HARDCODED_PRODUCTS.find(p => p.id === slug) || null
+      return null
     }
 
     return mapSupabaseProduct(data)
   } catch {
-    return HARDCODED_PRODUCTS.find(p => p.id === slug) || null
+    return null
   }
 }
 

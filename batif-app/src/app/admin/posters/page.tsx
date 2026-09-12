@@ -1,16 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useTheme } from '@/lib/theme-context'
 import {
-  inputClass,
-  selectClass,
-  textareaClass,
-  labelClass,
   cardClass,
-  sectionTitleClass,
-  btnPrimary,
-  btnSecondary,
   btnDanger,
   btnOrange,
   ConfirmDialog,
@@ -52,22 +46,6 @@ export default function AdminPostersPage() {
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [search, setSearch] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Poster | null>(null)
-  const [editingPoster, setEditingPoster] = useState<Poster | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-
-  // Form state
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: 'Art Poster',
-    material: 'Premium Matte Paper',
-    status: 'draft',
-    is_limited: false,
-    badge: '',
-    images: [] as { url: string; image_type: string }[],
-    sizes: ['A3', 'A2', 'A1'] as { name: string; price: string }[],
-  })
 
   const fetchPosters = useCallback(async () => {
     try {
@@ -83,91 +61,6 @@ export default function AdminPostersPage() {
 
   useEffect(() => { fetchPosters() }, [fetchPosters])
 
-  const resetForm = () => {
-    setForm({
-      name: '',
-      description: '',
-      price: '',
-      category: 'Art Poster',
-      material: 'Premium Matte Paper',
-      status: 'draft',
-      is_limited: false,
-      badge: '',
-      images: [],
-      sizes: [
-        { name: 'A3', price: '' },
-        { name: 'A2', price: '' },
-        { name: 'A1', price: '' },
-      ],
-    })
-    setEditingPoster(null)
-  }
-
-  const openAddForm = () => {
-    resetForm()
-    setIsFormOpen(true)
-  }
-
-  const openEditForm = (poster: Poster) => {
-    setEditingPoster(poster)
-    setForm({
-      name: poster.name,
-      description: poster.description || '',
-      price: String(poster.price || ''),
-      category: poster.category || 'Art Poster',
-      material: poster.material || 'Premium Matte Paper',
-      status: poster.status,
-      is_limited: poster.is_limited || false,
-      badge: poster.badge || '',
-      images: poster.product_images || [],
-      sizes: poster.product_sizes?.length > 0
-        ? poster.product_sizes.map((s) => ({ name: s.name, price: String(s.price || '') }))
-        : [{ name: 'A3', price: '' }, { name: 'A2', price: '' }, { name: 'A1', price: '' }],
-    })
-    setIsFormOpen(true)
-  }
-
-  const handleSave = async () => {
-    try {
-      const payload = {
-        name: form.name,
-        description: form.description,
-        price: form.price ? Number(form.price) : 0,
-        category: form.category,
-        material: form.material,
-        status: form.status,
-        is_limited: form.is_limited,
-        badge: form.badge || null,
-        product_type: 'poster',
-        images: form.images,
-        sizes: form.sizes.filter(s => s.name).map(s => ({
-          name: s.name,
-          price: s.price ? Number(s.price) : undefined,
-        })),
-      }
-
-      if (editingPoster) {
-        await fetch(`/api/admin/posters/${editingPoster.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-      } else {
-        await fetch('/api/admin/posters', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-      }
-
-      setIsFormOpen(false)
-      resetForm()
-      fetchPosters()
-    } catch (err) {
-      console.error('Failed to save poster:', err)
-    }
-  }
-
   const handleDelete = async () => {
     if (!deleteTarget) return
     try {
@@ -177,48 +70,6 @@ export default function AdminPostersPage() {
     } catch (err) {
       console.error('Failed to delete poster:', err)
     }
-  }
-
-  const addImage = () => {
-    setForm(prev => ({
-      ...prev,
-      images: [...prev.images, { url: '', image_type: prev.images.length === 0 ? 'main' : 'gallery' }],
-    }))
-  }
-
-  const updateImage = (idx: number, field: string, value: string) => {
-    setForm(prev => ({
-      ...prev,
-      images: prev.images.map((img, i) => i === idx ? { ...img, [field]: value } : img),
-    }))
-  }
-
-  const removeImage = (idx: number) => {
-    setForm(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== idx),
-    }))
-  }
-
-  const addSize = () => {
-    setForm(prev => ({
-      ...prev,
-      sizes: [...prev.sizes, { name: '', price: '' }],
-    }))
-  }
-
-  const updateSize = (idx: number, field: string, value: string) => {
-    setForm(prev => ({
-      ...prev,
-      sizes: prev.sizes.map((s, i) => i === idx ? { ...s, [field]: value } : s),
-    }))
-  }
-
-  const removeSize = (idx: number) => {
-    setForm(prev => ({
-      ...prev,
-      sizes: prev.sizes.filter((_, i) => i !== idx),
-    }))
   }
 
   const filtered = posters.filter(p =>
@@ -239,9 +90,9 @@ export default function AdminPostersPage() {
               {posters.length} total · Art prints & poster management
             </p>
           </div>
-          <button onClick={openAddForm} className={btnOrange}>
+          <Link href="/admin/posters/new" className={btnOrange}>
             + ADD POSTER
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -379,9 +230,14 @@ export default function AdminPostersPage() {
 
                 {/* Actions */}
                 <div className="col-span-2 flex items-center justify-end gap-1">
-                  <button onClick={() => openEditForm(poster)} className={btnSecondary + ' text-[10px] px-2 py-1'}>
+                  <Link
+                    href={`/admin/posters/${poster.id}/edit`}
+                    className={`text-[10px] px-2 py-1 border uppercase tracking-wider hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${
+                      isDark ? 'border-white/15 text-white' : 'border-black/15 text-black'
+                    }`}
+                  >
                     EDIT
-                  </button>
+                  </Link>
                   <button onClick={() => setDeleteTarget(poster)} className={btnDanger}>
                     DELETE
                   </button>
@@ -391,254 +247,6 @@ export default function AdminPostersPage() {
           </div>
         )}
       </div>
-
-      {/* Add/Edit Form Modal */}
-      {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto pt-10 pb-10">
-          <div className="absolute inset-0 bg-black/60" onClick={() => { setIsFormOpen(false); resetForm() }} />
-          <div className={`relative w-full max-w-[800px] mx-4 ${isDark ? 'bg-[#111]' : 'bg-white'} border ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-            {/* Form Header */}
-            <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-white/8' : 'border-black/8'}`}>
-              <h2 className={`text-base font-bold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
-                {editingPoster ? 'EDIT POSTER' : 'ADD POSTER'}
-              </h2>
-              <button
-                onClick={() => { setIsFormOpen(false); resetForm() }}
-                className={`text-xl ${isDark ? 'text-white/40 hover:text-white' : 'text-black/40 hover:text-black'}`}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Basic Info */}
-              <div>
-                <p className={sectionTitleClass}>POSTER INFORMATION</p>
-                <div className="space-y-3">
-                  <div>
-                    <label className={labelClass}>TITLE</label>
-                    <input
-                      type="text"
-                      value={form.name}
-                      onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                      placeholder="PEACE OF MIND"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClass}>DESCRIPTION</label>
-                    <textarea
-                      value={form.description}
-                      onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                      placeholder="A study of silence, space and the moments we rarely make time for."
-                      rows={3}
-                      className={textareaClass}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelClass}>CATEGORY</label>
-                      <select
-                        value={form.category}
-                        onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
-                        className={selectClass}
-                      >
-                        <option>Art Poster</option>
-                        <option>Photo Print</option>
-                        <option>Illustration</option>
-                        <option>Typography</option>
-                        <option>Limited Edition</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelClass}>MATERIAL</label>
-                      <input
-                        type="text"
-                        value={form.material}
-                        onChange={e => setForm(p => ({ ...p, material: e.target.value }))}
-                        placeholder="Premium Matte Paper"
-                        className={inputClass}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing */}
-              <div>
-                <p className={sectionTitleClass}>PRICING</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={labelClass}>BASE PRICE (MAD)</label>
-                    <input
-                      type="number"
-                      value={form.price}
-                      onChange={e => setForm(p => ({ ...p, price: e.target.value }))}
-                      placeholder="350"
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClass}>BADGE</label>
-                    <input
-                      type="text"
-                      value={form.badge}
-                      onChange={e => setForm(p => ({ ...p, badge: e.target.value }))}
-                      placeholder="LIMITED ART PRINT"
-                      className={inputClass}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sizes */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className={sectionTitleClass}>SIZES</p>
-                  <button onClick={addSize} className="text-[10px] text-[#FF5131] uppercase tracking-wider hover:opacity-80">
-                    + ADD SIZE
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {form.sizes.map((size, idx) => (
-                    <div key={idx} className={`flex items-center gap-3 p-3 border ${isDark ? 'border-white/8 bg-white/[0.02]' : 'border-black/5 bg-black/[0.01]'}`}>
-                      <input
-                        type="text"
-                        value={size.name}
-                        onChange={e => updateSize(idx, 'name', e.target.value)}
-                        placeholder="A1"
-                        className={`${inputClass} w-[80px] shrink-0`}
-                      />
-                      <input
-                        type="number"
-                        value={size.price}
-                        onChange={e => updateSize(idx, 'price', e.target.value)}
-                        placeholder="Price for this size"
-                        className={`${inputClass} w-[180px]`}
-                      />
-                      <span className={`text-[10px] ${isDark ? 'text-white/30' : 'text-black/30'}`}>MAD</span>
-                      {form.sizes.length > 1 && (
-                        <button onClick={() => removeSize(idx)} className="text-[10px] text-[#FF5131] hover:opacity-80">✕</button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Images */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className={sectionTitleClass}>IMAGES</p>
-                  <div className="flex items-center gap-3">
-                    <label className="text-[10px] text-[#FF5131] uppercase tracking-wider hover:opacity-80 cursor-pointer">
-                      + UPLOAD FILE
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          const token = sessionStorage.getItem('batif_admin_token') || ''
-                          const formData = new FormData()
-                          formData.append('file', file)
-                          formData.append('bucket', 'products')
-                          formData.append('folder', 'posters')
-                          try {
-                            const res = await fetch('/api/admin/upload', {
-                              method: 'POST',
-                              headers: { 'Authorization': `Bearer ${token}` },
-                              body: formData,
-                            })
-                            const data = await res.json()
-                            if (data.url) {
-                              setForm(prev => ({
-                                ...prev,
-                                images: [
-                                  ...prev.images,
-                                  { url: data.url, image_type: prev.images.length === 0 ? 'main' : 'gallery' },
-                                ],
-                              }))
-                            } else {
-                              alert('Upload failed: ' + (data.error || 'Unknown error'))
-                            }
-                          } catch (err: any) {
-                            console.error('Upload failed:', err)
-                            alert('Upload failed: ' + err.message)
-                          }
-                        }}
-                      />
-                    </label>
-                    <button onClick={addImage} className="text-[10px] text-[#FF5131] uppercase tracking-wider hover:opacity-80">
-                      + ADD URL
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {form.images.map((img, idx) => (
-                    <div key={idx} className={`flex items-center gap-3 p-2 border ${isDark ? 'border-white/8' : 'border-black/5'}`}>
-                      <span className={`text-[10px] w-12 shrink-0 ${isDark ? 'text-white/30' : 'text-black/30'}`}>
-                        {idx === 0 ? 'MAIN' : `#${idx + 1}`}
-                      </span>
-                      <input
-                        type="url"
-                        value={img.url}
-                        onChange={e => updateImage(idx, 'url', e.target.value)}
-                        placeholder="https://example.com/poster-image.jpg"
-                        className={`${inputClass} flex-1`}
-                      />
-                      {img.url && (
-                        <div className={`w-10 h-12 overflow-hidden shrink-0 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                          <img src={img.url} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      <button onClick={() => removeImage(idx)} className="text-[10px] text-[#FF5131] hover:opacity-80 shrink-0">✕</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Settings */}
-              <div className="flex items-center gap-6">
-                <div>
-                  <label className={labelClass}>STATUS</label>
-                  <select
-                    value={form.status}
-                    onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                    className={`${selectClass} w-[160px]`}
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                  </select>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer pt-5">
-                  <input
-                    type="checkbox"
-                    checked={form.is_limited}
-                    onChange={e => setForm(p => ({ ...p, is_limited: e.target.checked }))}
-                    className="accent-[#FF5131]"
-                  />
-                  <span className={`text-xs ${isDark ? 'text-white' : 'text-black'}`}>LIMITED EDITION</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Form Footer */}
-            <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t ${isDark ? 'border-white/8' : 'border-black/8'}`}>
-              <button onClick={() => { setIsFormOpen(false); resetForm() }} className={btnSecondary}>
-                CANCEL
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!form.name}
-                className={btnOrange}
-              >
-                {editingPoster ? 'SAVE CHANGES' : 'CREATE POSTER'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation */}
       <ConfirmDialog
